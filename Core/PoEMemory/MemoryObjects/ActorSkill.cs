@@ -121,8 +121,8 @@ namespace ExileCore.PoEMemory.MemoryObjects
 
         long GetSkillUiStatePtr()
         {
-	        var listStart = M.Read<long>(pTheGame.IngameState.IngameUi.Address + 0x3b8, 0x980, 0x168);
-	        var listEnd = M.Read<long>(pTheGame.IngameState.IngameUi.Address + 0x3b8, 0x980, 0x170);
+	        var listStart = M.Read<long>(pTheGame.IngameState.ServerData.Address + 0x8088, 0x610, 0x28, 0x170);
+	        var listEnd = M.Read<long>(pTheGame.IngameState.ServerData.Address + 0x8088, 0x610, 0x28, 0x178);
 	        int maxCount = 100;
 	        for (var ptr = listStart; ptr < listEnd && maxCount > 0; ptr += 0x48, maxCount--)
 	        {
@@ -162,7 +162,7 @@ namespace ExileCore.PoEMemory.MemoryObjects
         {
             get
             {
-                var statsPtr = M.Read<long>(Address + 0x80);
+                var statsPtr = M.Read<long>(Address + 0xA0);
                 var result = new Dictionary<GameStat, int>();
 
                 ReadStats(result, statsPtr);
