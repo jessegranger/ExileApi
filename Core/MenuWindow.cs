@@ -32,7 +32,6 @@ namespace ExileCore
         private readonly Action OnWindowChange;
         private Windows openWindow;
         private readonly int PluginNameWidth = 200;
-        private List<PluginWrapper> plugins;
         private List<DebugInformation> PluginsDebug = new List<DebugInformation>();
         private Action Selected = () => { };
         private string selectedName = "";
@@ -279,7 +278,13 @@ namespace ExileCore
             }
 
             ImGui.Separator();
-            if (ImGui.Selectable("PluginAutoUpdate", _index == -2))
+            var pluginsWithAvailableUpdateCount = PluginsUpdateSettings?.Plugins.Where(p => p.UpdateAvailable).Count();
+            var autoUpdateText = "PluginAutoUpdate";
+            if (pluginsWithAvailableUpdateCount > 0)
+            {
+                autoUpdateText += $" ({pluginsWithAvailableUpdateCount})";
+            }
+            if (ImGui.Selectable(autoUpdateText, _index == -2))
             {
                 _index = -2;
                 Selected = () => 
