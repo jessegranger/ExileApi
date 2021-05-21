@@ -8,7 +8,6 @@ using ExileCore.Shared;
 using ExileCore.Shared.Cache;
 using ExileCore.Shared.Enums;
 using ExileCore.Shared.Interfaces;
-using ExileCore.Shared.SomeMagic;
 using SharpDX;
 
 namespace ExileCore
@@ -85,11 +84,6 @@ namespace ExileCore
             };*/
 
             debDeltaTime = Core.DebugInformations.FirstOrDefault(x => x.Name == "Delta Time");
-
-            NativeMethods.LogError = _settings.LogReadMemoryError;
-
-            _settings.LogReadMemoryError.OnValueChanged +=
-                (obj, b) => NativeMethods.LogError = _settings.LogReadMemoryError;
 
             LeftCornerMap = new TimeCache<Vector2>(GetLeftCornerMap, 500);
             UnderCornerMap = new TimeCache<Vector2>(GetUnderCornerMap, 500);
@@ -183,27 +177,28 @@ namespace ExileCore
             var diagnosticElement = ingameState.LatencyRectangle;
             var ingameUiSulphit = ingameState.IngameUi.Sulphit;
 
+            
             switch (ingameState.DiagnosticInfoType)
             {
                 case DiagnosticInfoType.Off:
-
                     if (ingameUiSulphit != null && ingameUiSulphit.IsVisibleLocal)
+                    {
                         clientRect.X -= ingameUiSulphit.GetClientRectCache.Width;
-
+                    }
                     break;
                 case DiagnosticInfoType.Short:
-                    clientRect.X -= diagnosticElement.X + 30;
-                    break;
-
-                case DiagnosticInfoType.Full:
-
                     if (ingameUiSulphit != null && ingameUiSulphit.IsVisibleLocal)
+                    {
                         clientRect.X -= ingameUiSulphit.GetClientRectCache.Width;
-
+                        
+                    }
+                    else
+                    {
+                        clientRect.Y += diagnosticElement.Y + diagnosticElement.Height;
+                    }
+                    break;
+                case DiagnosticInfoType.Full:
                     clientRect.Y += diagnosticElement.Y + diagnosticElement.Height;
-                    var fpsRectangle = ingameState.FPSRectangle;
-
-                    // clientRect.X -= fpsRectangle.X + fpsRectangle.Width + 6;
                     break;
             }
 
