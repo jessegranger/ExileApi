@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Xml.Serialization;
 using ExileCore.Shared.Cache;
 using ExileCore.Shared.Enums;
 using GameOffsets;
@@ -19,8 +18,7 @@ namespace ExileCore.PoEMemory.MemoryObjects
         public GrantedEffectsPerLevel EffectsPerLevel => ReadObject<GrantedEffectsPerLevel>(Address + 0x18);
         public bool CanBeUsedWithWeapon => M.Read<byte>(Address + 0x50) > 0; 
         public bool CanBeUsed => M.Read<byte>(Address + 0x51) == 0;
-        public int Cost => M.Read<byte>(Address + 0x54); 
-        public int TotalUses => M.Read<int>(Address + 0x58);
+        public int TotalUses => M.Read<int>(Address + 0x54); 
         public float Cooldown => M.Read<int>(Address + 0x5C) / 100f; //Converted milliseconds to seconds 
         public int SoulsPerUse => M.Read<int>(Address + 0x6C);
         public int TotalVaalUses => M.Read<int>(Address + 0x70);
@@ -63,16 +61,28 @@ namespace ExileCore.PoEMemory.MemoryObjects
         public bool IsUsing => SkillUseStage > 2;
         public bool PrepareForUsage => SkillUseStage == 1;
         public float Dps => GetStat(GameStat.HundredTimesDamagePerSecond + (IsUsing ? 4 : 0)) / 100f;
-	
-        public TimeSpan CastTime => IsInstant? TimeSpan.FromMilliseconds(0)
-            :TimeSpan.FromMilliseconds((int)Math.Ceiling(1000f / (HundredTimesAttacksPerSecond / 100f)));
-        public int HundredTimesAttacksPerSecond =>
-            GetStat(IsSpell ? GameStat.HundredTimesCastsPerSecond : GameStat.HundredTimesAttacksPerSecond);
+        public TimeSpan CastTime => IsInstant
+            ? TimeSpan.FromMilliseconds(0)
+            : TimeSpan.FromMilliseconds((int)Math.Ceiling(1000f / (HundredTimesAttacksPerSecond / 100f)));
+        public int HundredTimesAttacksPerSecond
+        {
+            get
+            {
+                if (IsCry) return 60;
+                if (IsInstant) return 0;
+
+                return GetStat(
+                    IsSpell 
+                    ? GameStat.HundredTimesCastsPerSecond 
+                    : GameStat.HundredTimesAttacksPerSecond
+                );
+            }
+        }
         public bool IsSpell => GetStat(GameStat.CastingSpell) == 1;
         public bool IsAttack => GetStat(GameStat.SkillIsAttack) == 1;
+        public bool IsCry => InternalName.EndsWith("_cry");
         public bool IsInstant => GetStat(GameStat.SkillIsInstant) == 1;
-	
-	public bool IsMine => GetStat(GameStat.IsRemoteMine) == 1 || GetStat(GameStat.SkillIsMined) == 1;
+	    public bool IsMine => GetStat(GameStat.IsRemoteMine) == 1 || GetStat(GameStat.SkillIsMined) == 1;
         public bool IsTotem => GetStat(GameStat.IsTotem) == 1 || GetStat(GameStat.SkillIsTotemified) == 1;
         public bool IsTrap => GetStat(GameStat.IsTrap) == 1 || GetStat(GameStat.SkillIsTrapped) == 1;
         public bool IsVaalSkill => SoulsPerUse >= 1 && TotalVaalUses >= 1;
@@ -105,9 +115,9 @@ namespace ExileCore.PoEMemory.MemoryObjects
 
         long GetSkillUiStatePtr()
         {
-	        var listStart = M.Read<long>(pTheGame.IngameState.ServerData.Address + 0x8088, 0x610, 0x28, 0x170);
-	        var listEnd = M.Read<long>(pTheGame.IngameState.ServerData.Address + 0x8088, 0x610, 0x28, 0x178);
-	        int maxCount = 100;
+            var listStart = M.Read<long>(pTheGame.IngameState.ServerData.Address + 0x8108, 0x610, 0x28, 0x170);
+            var listEnd = M.Read<long>(pTheGame.IngameState.ServerData.Address + 0x8108, 0x610, 0x28, 0x178);
+            int maxCount = 100;
 	        for (var ptr = listStart; ptr < listEnd && maxCount > 0; ptr += 0x48, maxCount--)
 	        {
 		        var state = M.Read<SkillUiStateOffsets>(ptr);
