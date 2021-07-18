@@ -20,6 +20,7 @@ namespace Follower
         {
             GameController = gameController;
             Graphics = graphics;
+            Machine.EnableLogging((s) => Log(s));
         }
 
         private class KeyTracker : State
@@ -36,16 +37,18 @@ namespace Follower
             public override State OnTick()
             {
                 bool downNow = input.InputDeviceState.IsHardwareKeyDown(Key);
+                // DrawTextAtPlayer($"KeyTracker({Key}): Tick({downNow})");
                 if( downBefore && !downNow) Action();
                 downBefore = downNow;
                 return this;
             }
+            public override string ToString() => $"TK-{Key}";
         }
 
-        public static void OnRelease(VirtualKeyCode key, Action action) => Machine.Add(new KeyTracker(key, action));
-        public static void PressKey(VirtualKeyCode Key, uint duration) => Machine.Add(new PressKey(Key, duration));
-        public static void LeftClickAt(float x, float y, uint duration) => Machine.Add(new LeftClickAt(GameController.Window, x, y, duration));
-        public static void RightClickAt(float x, float y, uint duration) => Machine.Add(new RightClickAt(GameController.Window, x, y, duration));
+        public static void OnRelease(VirtualKeyCode key, Action action) => Add(new KeyTracker(key, action));
+        public static void PressKey(VirtualKeyCode Key, uint duration) => Add(new PressKey(Key, duration));
+        public static void LeftClickAt(float x, float y, uint duration) => Add(new LeftClickAt(GameController.Window, x, y, duration));
+        public static void RightClickAt(float x, float y, uint duration) => Add(new RightClickAt(GameController.Window, x, y, duration));
         public static void LeftClickAt(SharpDX.RectangleF rect, uint duration) => LeftClickAt(rect.Center.X, rect.Center.Y, duration);
         public static void RightClickAt(SharpDX.RectangleF rect, uint duration) => RightClickAt(rect.Center.X, rect.Center.Y, duration);
         internal static bool IsPressed(VirtualKeyCode key) => input.InputDeviceState.IsHardwareKeyDown(key);
