@@ -97,37 +97,51 @@ namespace Follower
                 public override State OnTick() => Next;
             }
 
-            private static Action<string> logDelegate;
-            public static void EnableLogging(Action<string> logger) => logDelegate = logger;
-            public static void DisableLogging() => logDelegate = null;
-            private static void Log(string s) => logDelegate?.Invoke(s);
+            private Action<string> logDelegate;
+            public void EnableLogging(Action<string> logger) => logDelegate = logger;
+            public void DisableLogging() => logDelegate = null;
+            private void Log(string s) => logDelegate?.Invoke($"{machineTimer.Elapsed} {s}");
+
+            private static Stopwatch machineTimer = new Stopwatch();
+            static Machine() => machineTimer.Start();
 
             public override State OnTick()
             {
                 // Each State in the States list will be ticked "in parallel" (all get ticked each frame)
-                LinkedListNode<State> curNode = States.First;
-                while (curNode != null)
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+                try
                 {
-                    State curState = curNode.Value;
-                    State gotoState = curState.OnTick();
-                    if (gotoState == null)
+                    LinkedListNode<State> curNode = States.First;
+                    while (curNode != null)
                     {
-                        Log($"State Finished: {curState.Name}.");
-                        curNode = RemoveAndContinue(States, curNode);
-                        continue;
-                    }
-                    if (gotoState != curState)
-                    {
-                        gotoState = gotoState.OnEnter();
-                        Log($"State Changed: {curState.Name} to {gotoState.Name}");
-                        if (gotoState.GetType() == typeof(Clear))
+                        State curState = curNode.Value;
+                        State gotoState = curState.OnTick();
+                        if (gotoState == null)
                         {
-                            Abort(except: curState); // call all OnAbort in State, except curState.OnAbort, because it just ended cleanly (as far as it knows)
-                            return gotoState.Next ?? Next;
+                            Log($"State Finished: {curState.Name}.");
+                            curNode = RemoveAndContinue(States, curNode);
+                            continue;
                         }
-                        curNode.Value = gotoState;
+                        if (gotoState != curState)
+                        {
+                            gotoState = gotoState.OnEnter();
+                            Log($"State Changed: {curState.Name} to {gotoState.Name}");
+                            if (gotoState.GetType() == typeof(Clear))
+                            {
+                                Abort(except: curState); // call all OnAbort in State, except curState.OnAbort, because it just ended cleanly (as far as it knows)
+                                return gotoState.Next ?? Next;
+                            }
+                            curState.Next = null; // just in case
+                            curNode.Value = gotoState;
+                        }
+                        curNode = curNode.Next; // loop over the whole list
                     }
-                    curNode = curNode.Next; // loop over the whole list
+                }
+                finally
+                {
+                    watch.Stop();
+                    // DrawTextAtPlayer($"StateMachine: {GetType().Name} [{string.Join(", ", States.Select((s) => s.ToString()))}] {watch.Elapsed}");
                 }
                 return States.Count == 0 ? Next : this;
             }
@@ -136,7 +150,11 @@ namespace Follower
                 foreach (State s in States) if (s != except) s.OnAbort();
                 States.Clear();
             }
-            public void Add(State state) => States.AddLast(States.Count == 0 ? state.OnEnter() : state);
+            public void Add(State state)
+            {
+                Log($"State Added: {state.Name}");
+                States.AddLast(States.Count == 0 ? state.OnEnter() : state);
+            }
             public void Remove(State state) => States.Remove(state);
             public void Remove(Type stateType)
             {
@@ -202,7 +220,8 @@ namespace Follower
     class PressKey : KeyState
     {
         public PressKey(VirtualKeyCode key, uint duration, State next = null) : base(key,
-            new KeyDown(key, new Delay(duration, new KeyUp(key, next)))) { }
+            new KeyDown(key, new Delay(duration, new KeyUp(key, next))))
+        { }
 
         public override State OnEnter() => Next;
     }
@@ -220,7 +239,7 @@ namespace Follower
         }
         public override State OnTick()
         {
-			if (Window == null) return Next;
+            if (Window == null) return Next;
             var w = Window.GetWindowRectangleTimeCache;
             var bounds = Screen.PrimaryScreen.Bounds;
             input.Mouse.MoveMouseTo(
@@ -229,7 +248,7 @@ namespace Follower
             return Next;
         }
     }
-    class LeftMouseDown: InputState
+    class LeftMouseDown : InputState
     {
         public LeftMouseDown(State next = null) : base(next) { }
         public override State OnTick()
@@ -239,7 +258,7 @@ namespace Follower
         }
     }
 
-    class LeftMouseUp: InputState
+    class LeftMouseUp : InputState
     {
         public LeftMouseUp(State next = null) : base(next) { }
         public override State OnTick()
@@ -249,21 +268,22 @@ namespace Follower
         }
     }
 
-    class LeftClick: InputState
+    class LeftClick : InputState
     {
         public LeftClick(uint duration, State next = null) : base(
-            new LeftMouseDown(new Delay(duration, new LeftMouseUp(next)))) { }
+            new LeftMouseDown(new Delay(duration, new LeftMouseUp(next))))
+        { }
         public override State OnEnter() => Next;
     }
 
-    class LeftClickAt: InputState
+    class LeftClickAt : InputState
     {
         public LeftClickAt(GameWindow window, float x, float y, uint duration, State next = null) : base(
             new MoveMouse(window, x, y, new Delay(duration, new LeftMouseDown(new Delay(duration, new LeftMouseUp(next))))))
         { }
     }
 
-    class RightMouseDown: InputState
+    class RightMouseDown : InputState
     {
         public RightMouseDown(State next = null) : base(next) { }
         public override State OnTick()
@@ -273,7 +293,7 @@ namespace Follower
         }
     }
 
-    class RightMouseUp: InputState
+    class RightMouseUp : InputState
     {
         public RightMouseUp(State next = null) : base(next) { }
         public override State OnTick()
@@ -283,14 +303,15 @@ namespace Follower
         }
     }
 
-    class RightClick: InputState
+    class RightClick : InputState
     {
         public RightClick(uint duration, State next = null) : base(
-            new RightMouseDown(new Delay(duration, new RightMouseUp(next)))) { }
+            new RightMouseDown(new Delay(duration, new RightMouseUp(next))))
+        { }
         public override State OnEnter() => Next;
     }
 
-    class RightClickAt: InputState
+    class RightClickAt : InputState
     {
         public RightClickAt(GameWindow window, float x, float y, uint duration, State next = null) : base(
             new MoveMouse(window, x, y, new Delay(duration, new RightMouseDown(new Delay(duration, new RightMouseUp(next))))))
