@@ -26,6 +26,8 @@ namespace Follower
 
 		public ToggleNode UseVaalGrace { get; set; }
 
+		public ToggleNode UseVaalImpurityOfIce { get; set; }
+
 		public int LifeFlaskThreshold { get; set; } = 3000;
 
 	}
