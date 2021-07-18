@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements.InventoryElements;
 using static Follower.Globals;
 
@@ -11,23 +12,51 @@ namespace Follower
         {
             public string ModName;
             public bool AcceptAnyValue = true;
-            public float AcceptMinValue = float.MinValue;
-            public float AcceptMaxValue = float.MaxValue;
-            public bool Matches(NormalInventoryItem item)
+            public int AcceptMinValue = int.MinValue;
+            public int AcceptMaxValue = int.MaxValue;
+            public bool Matches(NormalInventoryItem item) => CountMatches(item) > 0;
+            public int CountMatches(NormalInventoryItem item)
             {
-                return HasMod(item.Item, ModName);
+                int count = 0;
+                var mods = item.Item.GetComponent<Mods>();
+                if (mods == null) return 0;
+                string prefix = ModName;
+                bool matchPrefix = false;
+                if( ModName.EndsWith("*") )
+                {
+                    matchPrefix = true;
+                    prefix = ModName.Substring(0, ModName.Length - 1);
+                }
+
+                foreach(var mod in mods.ItemMods)
+                {
+                    if( (matchPrefix && mod.Name.StartsWith(prefix)) || mod.Name.Equals(ModName) )
+                    {
+                        if( AcceptAnyValue || (mod.Value1 >= AcceptMinValue && mod.Value1 <= AcceptMaxValue))
+                        {
+                            count += 1;
+                        }
+                    }
+                }
+                return count;
             }
             public ItemModQuery(string modName) => ModName = modName;
         }
         private abstract class ItemQueryGroup
         {
             public abstract bool Matches(NormalInventoryItem item);
+            public virtual int CountMatches(NormalInventoryItem item) => Matches(item) ? 1 : 0;
         }
         private class ItemQueryGroup_AllMatch : ItemQueryGroup
         {
             private List<ItemModQuery> matches;
             public ItemQueryGroup_AllMatch(params ItemModQuery[] query) => matches = new List<ItemModQuery>(query);
             public override bool Matches(NormalInventoryItem item) => matches.All((query) => query.Matches(item));
+            public override int CountMatches(NormalInventoryItem item)
+            {
+                return matches.Select((query) => query.CountMatches(item)).Sum();
+            }
+        
         }
         private class ItemQueryGroup_CountMatch : ItemQueryGroup
         {
@@ -53,6 +82,10 @@ namespace Follower
         public bool Matches(NormalInventoryItem item)
         {
             return groups.All((group) => group.Matches(item));
+        }
+        public int CountMatches(NormalInventoryItem item)
+        {
+            return groups.Select((group) => group.CountMatches(item)).Sum();
         }
         private void MatchAll(params ItemModQuery[] query)
         {
