@@ -25,12 +25,20 @@ namespace Follower
             Settings = settings;
             InputManager.OnRelease(VirtualKeyCode.F3, () => Paused = false);
             InputManager.OnRelease(VirtualKeyCode.PAUSE, () => Paused = !Paused);
+            PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.005f, .085f), 0);
         }
 
+        private static string GetStatusText() => $"BuffManager[{(Paused ? "Paused" : "Running")}]";
+
         private static List<BuffToMaintain> vaalBuffsToMaintain = new List<BuffToMaintain>();
+        private static List<BuffToMaintain> buffsToMaintain = new List<BuffToMaintain>();
         public static void MaintainVaalBuff(ToggleNode config, string skillName, string buffName, VirtualKeyCode key)
         {
             vaalBuffsToMaintain.Add(new BuffToMaintain() { Node = config, SkillName = skillName, BuffName = buffName, Key = key });
+        }
+        public static void MaintainBuff(ToggleNode config, string skillName, string buffName, VirtualKeyCode key)
+        {
+            buffsToMaintain.Add(new BuffToMaintain() { Node = config, SkillName = skillName, BuffName = buffName, Key = key });
         }
         private class BuffToMaintain
         {
@@ -40,40 +48,21 @@ namespace Follower
             public VirtualKeyCode Key;
         }
 
-        private static bool TryGetVaalSkill(string skillName, out ActorVaalSkill skill)
-        {
-            var actor = api.Player.GetComponent<Actor>();
-            foreach (var s in actor.ActorVaalSkills)
-            {
-                if (!IsValid(s)) continue;
-                if (s.VaalSkillInternalName.Equals(skillName))
-                {
-                    skill = s;
-                    return true;
-                }
-            }
-            skill = null;
-            return false;
-        }
-
         public static void OnTick()
         {
-            if (Paused)
-            {
-                DrawTextAtPlayer("BuffManager [Paused]");
-                return;
-            }
+            if (Paused) return;
             if (HasBuff("grace_period")) return;
             foreach(var buff in vaalBuffsToMaintain)
             {
-                if(buff.Node.Value)
-                {
-                    if (HasBuff(buff.BuffName)) continue;
-                    else if (TryGetVaalSkill(buff.SkillName, out ActorVaalSkill skill) && skill.CurrVaalSouls == skill.VaalMaxSouls)
-                    {
-                        InputManager.PressKey(buff.Key, 30);
-                    }
-                }
+                if (!(buff.Node?.Value ?? false)) continue;
+                if (HasBuff(buff.BuffName)) continue;
+                SkillManager.TryUseVaalSkill(buff.SkillName, buff.Key);
+            }
+            foreach(var buff in buffsToMaintain)
+            {
+                if (!(buff.Node?.Value ?? false)) continue;
+                if (HasBuff(buff.BuffName)) continue;
+                SkillManager.TryUseSkill(buff.SkillName, buff.Key);
             }
         }
     }
