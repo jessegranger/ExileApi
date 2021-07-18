@@ -35,6 +35,11 @@ namespace Follower
             rollQuery = new ItemQuery();
             rollQuery.MatchCount(count, modNames);
         }
+		public static void SetTarget(string itemPath, ItemQuery targetQuery)
+        {
+			rollItemPath = itemPath;
+			rollQuery = targetQuery;
+        }
         private static string rollItemPath = null;
         private static ItemQuery rollQuery = null;
 
@@ -57,6 +62,7 @@ namespace Follower
         public static bool Resume()
         {
             Log("Resuming Roller...");
+			StepCount = 0;
             return Paused = false;
         }
 
@@ -86,6 +92,7 @@ namespace Follower
             switch (rollItemPath)
             {
                 case "Metadata/Items/Jewels/JewelPassiveTreeExpansionSmall": OneStepWithSmallClusterJewel(); break;
+                case "Metadata/Items/Jewels/JewelPassiveTreeExpansionMedium": OneStepWithMediumClusterJewel(); break;
             }
         }
         public static void Render()
@@ -107,7 +114,7 @@ namespace Follower
         {
             if (!Inventory.UseItemOnItem("Metadata/Items/Currency/CurrencyRerollMagic", item))
             {
-                Pause("Failed to use Orb of Transmutation.");
+                Pause("Failed to use Orb of Alteration.");
                 return false;
             }
             return true;
@@ -116,7 +123,7 @@ namespace Follower
         {
             if (!Inventory.UseItemOnItem("Metadata/Items/Currency/CurrencyAddModToMagic", item))
             {
-                Pause("Failed to use Orb of Transmutation.");
+                Pause("Failed to use Orb of Augmentation.");
                 return false;
             }
             return true;
@@ -125,7 +132,7 @@ namespace Follower
         {
             if (!Inventory.UseItemOnItem("Metadata/Items/Currency/CurrencyUpgradeMagicToRare", item))
             {
-                Pause("Failed to use Orb of Transmutation.");
+                Pause("Failed to use Regal Orb.");
                 return false;
             }
             return true;
@@ -134,10 +141,66 @@ namespace Follower
         {
             if (!Inventory.UseItemOnItem("Metadata/Items/Currency/CurrencyConvertToNormal", item))
             {
-                Pause("Failed to use Orb of Transmutation.");
+                Pause("Failed to use Orb of Scouring.");
                 return false;
             }
             return true;
+        }
+
+		static bool OneStepWithMediumClusterJewel()
+        {
+            if (rollItemPath == null) return false;
+            var rollItem = Inventory.FindFirstNonMatch(rollItemPath, rollQuery);
+            if (rollItem == null)
+            {
+                return Pause(string.Format("Cannot find any {0} item to roll.", rollItemPath));
+            }
+            if (!rollItem.Item.HasComponent<Mods>())
+            {
+                return Pause("Cannot use Roller on item with no mods.");
+            }
+            var panel = Game.IngameState.IngameUi.InventoryPanel;
+            if (!panel.IsVisible)
+            {
+                return Pause("Cannot roll when inventory is closed.");
+            }
+            if (rollQuery.Matches(rollItem))
+            {
+                return Pause("Successfully rolled target mod.");
+            }
+            var mods = rollItem.Item.GetComponent<Mods>();
+			if( mods == null )
+            {
+				return Pause("Item has null Mods component.");
+            }
+            Log(string.Format("(Medium Cluster) {0}", mods.ItemRarity));
+			switch( mods.ItemRarity)
+            {
+				case ItemRarity.Normal:
+					UpgradeToMagic(rollItem);
+					break;
+				case ItemRarity.Magic:
+					var q = new ItemQuery();
+					q.MatchAll("Affliction*");
+					var afflictionCount = q.CountMatches(rollItem);
+					q = new ItemQuery();
+					q.MatchAll("AfflictionNotable*");
+					var notableCount = q.CountMatches(rollItem);
+					Log($"(Medium Cluster) Affliction Count: {afflictionCount} Notable Count: {notableCount}");
+                    // if there's a notable but not one we are looking for, re-roll all of it
+                    if (notableCount > 0) { RerollMagic(rollItem); }
+                    else if ( afflictionCount == 1 ) { AddModToMagic(rollItem); }
+                    else if ( afflictionCount == 2 ) { RerollMagic(rollItem);  }
+                    else {
+                        Log($"(Medium Cluster) TODO");
+                    }
+					break;
+				case ItemRarity.Rare:
+					ConvertToNormal(rollItem);
+					break;
+            }
+
+			return true;
         }
 
         static bool OneStepWithSmallClusterJewel()
@@ -162,6 +225,10 @@ namespace Follower
                 return Pause("Successfully rolled target mod.");
             }
             var mods = rollItem.Item.GetComponent<Mods>();
+			if( mods == null )
+            {
+				return Pause("Item has null Mods component.");
+            }
             Log(string.Format("(Small Cluster) {0}", mods.ItemRarity));
             // if the target item:
             switch (mods.ItemRarity)
@@ -171,7 +238,7 @@ namespace Follower
                     break;
                 case ItemRarity.Magic:
                     var q = new ItemQuery();
-                    q.MatchAll("AfflictionNotable*");
+                    q.MatchAll("AfflictionNotable*"); // it has some notable, but not the one we want
                     if (q.Matches(rollItem)) { RerollMagic(rollItem); }
                     else
                     {
