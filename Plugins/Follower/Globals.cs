@@ -52,6 +52,13 @@ namespace Follower
 		}
 		public static bool HasBuff(params string[] buffNames) => buffNames.Any(k => buffCache.ContainsKey(k));
 		public static bool HasAnyBuff(string buffPrefix) => buffCache.Keys.Any(x => x.StartsWith(buffPrefix));
+		internal static void RenderBuffs()
+        {
+			foreach(var buff in buffCache.Keys)
+            {
+				DrawTextAtPlayer($"Buff: {buff}");
+            }
+        }
 
 		public static bool HasMod(Entity ent, string modName)
 		{
@@ -65,7 +72,8 @@ namespace Follower
 			if (itemMods == null || modName == null ) return false;
 			if( modName.EndsWith("*") )
             {
-                return itemMods.Any(x => x.Name != null && x.Name.StartsWith(modName.Substring(0, modName.Length - 1)));
+				string prefix = modName.Substring(0, modName.Length - 1);
+                return itemMods.Any(x => x.Name != null && x.Name.StartsWith(prefix));
             }
             else
             {

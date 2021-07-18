@@ -40,9 +40,11 @@ namespace Follower
             Roller.Initialise(GameController, Graphics);
             InputManager.Initialise(GameController, Graphics);
             FlaskManager.Initialise(GameController, Settings);
+            SkillManager.Initialise(GameController, Graphics, Settings);
 
             BuffManager.Initialise(GameController, Graphics, Settings);
             BuffManager.MaintainVaalBuff(Settings.UseVaalGrace, "vaal_grace", "vaal_aura_dodge", VirtualKeyCode.VK_T);
+            // BuffManager.MaintainVaalBuff(Settings.UseVaalImpurityOfIce, "cold_impurity", "cold_impurity_buff", VirtualKeyCode.VK_Q);
 
             GameController.EntityListWrapper.EntityAdded += OnEntityAdded;
             GameController.EntityListWrapper.EntityRemoved += OnEntityRemoved;
@@ -55,13 +57,13 @@ namespace Follower
             InputManager.OnRelease(VirtualKeyCode.F7, () =>
             {
                 InventoryReport();
-                Roller.MaxSteps = 10;
+                Roller.MaxSteps = 50;
                 // Roller.SetTarget("Metadata/Items/Jewels/JewelPassiveTreeExpansionSmall", 1, "AfflictionNotableFettle", "AfflictionNotableToweringThreat");
-                Roller.SetTarget("Metadata/Items/Jewels/JewelPassiveTreeExpansionSmall", 1, "AfflictionNotableEnduringComposure");
+                // Roller.SetTarget("Metadata/Items/Jewels/JewelPassiveTreeExpansionSmall", 1, "AfflictionNotableEnduringComposure");
+                Roller.SetTarget("Metadata/Items/Jewels/JewelPassiveTreeExpansionMedium", 1, "AfflictionNotableCookedAlive", "AfflictionNotableMasterOfFire");
                 Roller.Resume();
             });
             InputManager.OnRelease(VirtualKeyCode.F6, Test);
-            InputManager.OnRelease(VirtualKeyCode.F5, () => showBuffs = !showBuffs);
             InputManager.OnRelease(VirtualKeyCode.F4, ToggleConsole);
 
             InputManager.OnRelease(VirtualKeyCode.F2, () =>
@@ -95,10 +97,22 @@ namespace Follower
             do
             {
                 var panel = GameController.IngameState.IngameUi.InventoryPanel;
-                if (panel == null) break;
-                if (!panel.IsVisible) break;
+                if (panel == null)
+                {
+                    Log("No panel.");
+                    break;
+                }
+                if (!panel.IsVisible)
+                {
+                    Log("Not visible.");
+                    break;
+                }
                 var playerInventory = panel[InventoryIndex.PlayerInventory];
-                if (playerInventory == null) break;
+                if (playerInventory == null)
+                {
+                    Log("No player inventory.");
+                    break;
+                }
                 foreach (var item in playerInventory.VisibleInventoryItems)
                 {
                     if (!IsValid(item.Item)) continue;
@@ -107,9 +121,22 @@ namespace Follower
                     if (mods == null || mods.ItemMods == null) continue;
                     foreach (var mod in mods.ItemMods)
                     {
-                        Log(string.Format("Mod: {0}", mod.Name));
+                        Log($" - Mod: {mod.Name} {mod.Group} {mod.Value1}");
                     }
-
+                    Charges charges = item.Item.GetComponent<Charges>();
+                    if( charges != null )
+                    {
+                        Log($" - Charges: {charges.NumCharges}/{charges.ChargesMax}");
+                    }
+                    Quality quality = item.Item.GetComponent<Quality>();
+                    if( quality != null )
+                    {
+                        Log($" - Quality: {quality.ItemQuality}");
+                    }
+                    if( FlaskManager.IsFlask(item.Item))
+                    {
+                        Log($" - Flask: {FlaskManager.ParseFlask(item.Item).ToString()}");
+                    }
                 }
             } while (false);
 
@@ -124,19 +151,26 @@ namespace Follower
             foreach (GameStat key in keys) if (key.ToString().Contains("serv")) Log(string.Format("Key: {0} {1}", key, dict[key]));
 
             var actor = player.GetComponent<Actor>();
-            foreach (var skill in actor.ActorSkills) Log(string.Format("Skill: {0} Cooldown:{1} CanBeUsed:{2}", skill.Name, skill.IsOnCooldown, skill.CanBeUsed));
+            // foreach (var skill in actor.ActorSkills) Log($"Skill: {skill.Name} IsOnSkillBar:{skill.IsOnSkillBar} IsOnCooldown:{skill.IsOnCooldown} IsUsing:{skill.IsUsing} CanBeUsed:{skill.CanBeUsed}");
             foreach (var skill in actor.ActorVaalSkills) Log(string.Format("Vaal Skill: {0} Souls:{1}/{2}", skill.VaalSkillInternalName, skill.CurrVaalSouls, skill.VaalMaxSouls));
 
-            Log(string.Format("Objects: {0}", actor.DeployedObjectsCount));
-            foreach (var obj in actor.DeployedObjects)
-            {
-                Log(string.Format("Object: Id:{0} SkillKey:{1}", obj.ObjectId, obj.SkillKey));
-            }
+            Log(string.Format("Deployed Objects: {0}", actor.DeployedObjectsCount));
+            /*
+            foreach (var obj in actor.DeployedObjects) { Log(string.Format("Deployed Object: Id:{0} SkillKey:{1}", obj.ObjectId, obj.SkillKey)); }
             var ui = GameController.IngameState.IngameUi;
             foreach (var label in ui.ItemsOnGroundLabelElement.LabelsOnGround)
             {
                 Log(string.Format("Label: {0} Id:{3} Visible:{1} CanPickUp:{2}", label.Label?.Text ?? "null", label.IsVisible, label.CanPickUp, label.ItemOnGround.Id));
             }
+            InputManager.Add(
+                new KeyDown(VirtualKeyCode.VK_1,
+                new Delay(20,
+                new KeyUp(VirtualKeyCode.VK_1,
+                new Delay(20,
+                new KeyDown(VirtualKeyCode.VK_2,
+                new Delay(20,
+                new KeyUp(VirtualKeyCode.VK_2))))))));
+            */
 
         }
 
@@ -477,7 +511,9 @@ namespace Follower
             // pull all labels on the ground into the remainingLoot structure
             var ui = GameController.IngameState.IngameUi;
             // DrawTextAtPlayer(string.Format("Checking {0} labels", ui.ItemsOnGroundLabelElement.LabelsOnGround.Count));
-            foreach (var label in ui.ItemsOnGroundLabelElement.LabelsOnGround)
+            var labels = ui.ItemsOnGroundLabelElement;
+            if (labels == null || labels.LabelsOnGround == null ) return;
+            foreach (var label in labels.LabelsOnGround)
             {
                 if (!IsValid(label)) continue;
                 if (label.IsVisible && label.CanPickUp)
@@ -577,7 +613,6 @@ namespace Follower
             return null;
         }
 
-        private bool showBuffs = false;
 
         private Vector2 ScreenRelativeToClient(Vector2 pos)
         {
@@ -622,6 +657,11 @@ namespace Follower
                     currentRecipe.Render(Graphics);
 
                 RenderLabels();
+
+                if( Settings.ShowBuffNames.Value )
+                {
+                    RenderBuffs();
+                }
 
                 // DrawTextAtPlayer(string.Format("XP Rate: {0:N}/hr", xpPerMS.Value * (1000 * 60 * 60)));
 
