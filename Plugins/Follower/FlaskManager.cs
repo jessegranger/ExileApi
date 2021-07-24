@@ -256,7 +256,7 @@ namespace Follower
                 updateFlaskMods = false;
                 return;
             }
-            if (updateFlaskMods)
+            if (false)
             {
                 Log($"Updating {playerInventories.Count} inventories.");
                 for (int i = 0; i < playerInventories.Count; i++)
