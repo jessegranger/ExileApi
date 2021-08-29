@@ -206,6 +206,7 @@
     <Compile Include="PoEMemory\Components\DeployedObject.cs" />
     <Compile Include="PoEMemory\Components\DiesAfterTime.cs" />
     <Compile Include="PoEMemory\Components\Flask.cs" />
+    <Compile Include="PoEMemory\Components\Functions.cs" />
     <Compile Include="PoEMemory\Components\HeistBlueprint.cs" />
     <Compile Include="PoEMemory\Components\HeistContract.cs" />
     <Compile Include="PoEMemory\Components\HeistEquipment.cs" />
@@ -253,9 +254,11 @@
     <Compile Include="PoEMemory\Components\WorldDescription.cs" />
     <Compile Include="PoEMemory\Components\WorldItem.cs" />
     <Compile Include="PoEMemory\Element.cs" />
+    <Compile Include="PoEMemory\Elements\AtlasElement.cs" />
     <Compile Include="PoEMemory\Elements\BanditDialog.cs" />
     <Compile Include="PoEMemory\Elements\DelveDarknessElement.cs" />
     <Compile Include="PoEMemory\Elements\DelveElement.cs" />
+    <Compile Include="PoEMemory\Elements\DivineFont.cs" />
     <Compile Include="PoEMemory\Elements\EntityLabel.cs" />
     <Compile Include="PoEMemory\Elements\HarvestCraft.cs" />
     <Compile Include="PoEMemory\Elements\HoverItemIcon.cs" />

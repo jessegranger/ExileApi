@@ -53,8 +53,8 @@ namespace ExileCore.PoEMemory.MemoryObjects
         public InventoryElement InventoryPanel => GetObject<InventoryElement>(IngameUIElementsStruct.InventoryPanel);
         public Element TreePanel => GetChildAtIndex(24);
         public Element PVPTreePanel => GetChildAtIndex(25);
-        public Element AtlasPanel => GetObject<Element>(IngameUIElementsStruct.AtlasPanel);
-        public Element Atlas => AtlasPanel; // Required to fit with TehCheats Api, Random Feature uses this field.
+        public AtlasElement AtlasPanel => GetObject<AtlasElement>(IngameUIElementsStruct.AtlasPanel);
+        public AtlasElement Atlas => AtlasPanel; // Required to fit with TehCheats Api, Random Feature uses this field.
         public Map Map => _map ??= GetObject<Map>(IngameUIElementsStruct.Map);
         public ItemsOnGroundLabelElement ItemsOnGroundLabelElement => GetObject<ItemsOnGroundLabelElement>(IngameUIElementsStruct.itemsOnGroundLabelRoot);
         public IList<LabelOnGround> ItemsOnGroundLabels => ItemsOnGroundLabelElement.LabelsOnGround;
@@ -83,6 +83,9 @@ namespace ExileCore.PoEMemory.MemoryObjects
         public Element UltimatumProgressWindow => GetObject<Element>(IngameUIElementsStruct.UltimatumProgressPanel);
         public DelveDarknessElement DelveDarkness => GetObject<DelveDarknessElement>(IngameUIElementsStruct.DelveDarkness);
         public HarvestWindow HarvestWindow => GetObject<HarvestWindow>(IngameUIElementsStruct.HarvestWindow);
+
+        public DivineFont LabyrinthDivineFontPanel =>
+            GetObject<DivineFont>(IngameUIElementsStruct.LabyrinthDivineFontPanel);
         
         public IEnumerable<QuestState> GetUncompletedQuests => GetQuestStates.Where(q => q.QuestStateId != 0);
         public IEnumerable<QuestState> GetCompletedQuests => GetQuestStates.Where(q => q.QuestStateId == 0);
@@ -92,20 +95,18 @@ namespace ExileCore.PoEMemory.MemoryObjects
         {
             var result = new List<QuestState>();
             /*
-             * This is definitly not the most performant way to get the quest.
+             * This is definitely not the most performant way to get the quest.
              * 9 quests are missing (e.g. a10q2). 
              */
             for (long i = 0; i < 0xffff; i += 0x8)
             {
-                long pointerToQuest = IngameUIElementsStruct.GetQuests + i;
+                var pointerToQuest = IngameUIElementsStruct.GetQuests + i;
                 var addressOfQuest = M.Read<long>(pointerToQuest);
 
                 var questState = GetObject<QuestState>(addressOfQuest);
-                if (questState?.Quest != null)
-                {
-                    if (result.Where(r => r.Quest?.Id == questState.Quest?.Id).Any()) continue; // skip entries which are already in the list
-                    result.Add(questState);
-                }
+                if (questState?.Quest == null) continue;
+                if (result.Any(r => r.Quest?.Id == questState.Quest?.Id)) continue; // skip entries which are already in the list
+                result.Add(questState);
             }
 
             return result;
