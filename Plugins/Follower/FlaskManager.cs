@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using WindowsInput.Native;
-using static Follower.Globals;
+using static Assistant.Globals;
 
-namespace Follower
+namespace Assistant
 {
     static class FlaskManager
     {
@@ -218,17 +218,21 @@ namespace Follower
         };
 
         private static GameController api;
-        private static FollowerSettings Settings;
+        private static AssistantSettings Settings;
         private static bool Paused = true;
 
-        public static void Initialise(GameController gameController, FollowerSettings settings)
+        public static void Initialise(GameController gameController, AssistantSettings settings)
         {
             api = gameController;
             Settings = settings;
             // F3 starts it and refreshes flask mods at the same time
             InputManager.OnRelease(VirtualKeyCode.F3, () => updateFlaskMods = !(Paused = false));
             // pause just toggles operation
-            InputManager.OnRelease(VirtualKeyCode.PAUSE, () => Paused = !Paused);
+            InputManager.OnRelease(VirtualKeyCode.PAUSE, () =>
+            {
+                Paused = !Paused;
+                Log($"FlaskManager: {(Paused ? "Paused" : "Resumed")}");
+            });
             PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.25f, .89f), 0);
         }
 

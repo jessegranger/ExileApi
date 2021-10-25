@@ -2,32 +2,32 @@
 using ExileCore;
 using SharpDX;
 
-namespace Follower
+namespace Assistant
 {
-	partial class Follower
+	partial class Assistant
 	{
-		public class Console
+		public static class Console // there can be only One
 		{
-			public Vector2 Pos;
-			public float LineHeight = 12.0f;
-			public uint MaxLines = 55;
-			public bool Hidden = false;
-			public List<string> Lines = new List<string>();
-			public Console(float x, float y)
+			public static Vector2 Pos;
+			public static float LineHeight = 12.0f;
+			public static uint MaxLines = 55;
+			public static bool Hidden = false;
+			public static List<string> Lines = new List<string>();
+			static Console()
 			{
-				Pos = new Vector2(x, y);
+				Pos = new Vector2(10, 50);
 				Lines.Add("Console created.");
 			}
-			public void Add(string text)
+			public static void Add(string text)
 			{
+				Lines.Add(text);
 				if (Lines.Count > MaxLines)
 				{
 					Lines.RemoveRange(0, (int)(Lines.Count - MaxLines));
 				}
-				Lines.Add(text);
 			}
-			public void Clear() { Lines.Clear(); }
-			public void Render(Graphics G)
+			public static void Clear() { Lines.Clear(); }
+			public static void Render(Graphics G)
 			{
 				if (Hidden) return;
 				float x = Pos.X;

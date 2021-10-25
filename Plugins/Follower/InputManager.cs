@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using WindowsInput;
 using WindowsInput.Native;
-using static Follower.Globals;
+using static Assistant.Globals;
 
-namespace Follower
+namespace Assistant
 {
     static class InputManager
     {
@@ -20,7 +20,7 @@ namespace Follower
         {
             GameController = gameController;
             Graphics = graphics;
-            Machine.EnableLogging((s) => Log(s));
+            // Machine.EnableLogging((s) => Log(s));
         }
 
         private class KeyTracker : State

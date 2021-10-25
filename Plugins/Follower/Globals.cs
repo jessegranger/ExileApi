@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Follower
+namespace Assistant
 {
 	public static class Globals
 	{
@@ -25,13 +25,13 @@ namespace Follower
 			Game = game;
 			Gfx = gfx;
 			IsInitialised = true;
-			console.Pos = ScreenRelativeToWindow(.01f, .25f);
+			Assistant.Console.Pos = ScreenRelativeToWindow(.01f, .25f);
 		}
 
 		public static void Render()
 		{
 			if (!IsInitialised) return;
-			console.Render(Gfx);
+			Assistant.Console.Render(Gfx);
 			lineCounts.Clear();
 		}
 		public static void Tick(long dt)
@@ -52,11 +52,22 @@ namespace Follower
 		}
 		public static bool HasBuff(params string[] buffNames) => buffNames.Any(k => buffCache.ContainsKey(k));
 		public static bool HasAnyBuff(string buffPrefix) => buffCache.Keys.Any(x => x.StartsWith(buffPrefix));
+		public static bool TryGetBuffValue(string buffName, out int buffValue)
+        {
+			return buffCache.TryGetValue(buffName, out buffValue);
+        }
 		internal static void RenderBuffs()
+        {
+			foreach(var item in buffCache)
+            {
+				DrawTextAtPlayer($"Buff: {item.Key} : {item.Value}");
+            }
+        }
+		internal static void LogBuffs()
         {
 			foreach(var buff in buffCache.Keys)
             {
-				DrawTextAtPlayer($"Buff: {buff}");
+				Log($"Buff: {buff}");
             }
         }
 
@@ -111,9 +122,8 @@ namespace Follower
 			return Color.White;
         }
 
-        private static Follower.Console console = new Follower.Console(10, 50);
-		public static void Log(params string[] words) { console.Add(string.Join(" ", words)); }
-		public static void ToggleConsole() => console.Hidden = !console.Hidden;
+		public static void Log(params string[] words) { Assistant.Console.Add(string.Join(" ", words)); }
+		public static void ToggleConsole() => Assistant.Console.Hidden = !Assistant.Console.Hidden;
 
 		public static Vector2 ScreenRelativeToWindow(float x, float y)
 		{
@@ -139,5 +149,78 @@ namespace Follower
 		}
 		public static void DrawTextAtPlayer(string text) => DrawTextAtEnt(Game.Player, text);
         [DllImport("user32.dll")] public static extern bool GetCursorPos(out Point lpPoint);
-	}
+
+		public static bool IsFullLife(Entity ent)
+        {
+			var life = ent.GetComponent<Life>();
+			if (life == null) return false;
+			return life.CurHP == (life.MaxHP - life.ReservedFlatHP);
+        }
+		public static bool IsLowLife(Entity ent) {
+			var life = ent.GetComponent<Life>();
+			if (life == null) return false;
+			int maxHP = life.MaxHP - life.ReservedFlatHP;
+			return ((float)life.CurHP / maxHP) <= .50f;
+		}
+		public static bool IsLowES(Entity ent)
+        {
+            var life = ent.GetComponent<Life>();
+			if (life == null) return false;
+			return ((float)life.CurES / life.MaxES) <= .50f;
+        }
+		public static bool IsLowMana(Entity ent)
+        {
+            var life = ent.GetComponent<Life>();
+			if (life == null) return false;
+			int maxMana = life.MaxMana - life.ReservedFlatMana;
+			return ((float)life.CurMana / maxMana) <= .50f;
+        }
+		public static bool IsFullMana(Entity ent)
+        {
+            var life = ent.GetComponent<Life>();
+			if (life == null) return false;
+			int maxMana = life.MaxMana - life.ReservedFlatMana;
+			return life.CurMana == maxMana;
+        }
+
+        public static void DebugLife(Entity ent)
+        {
+            var life = ent.GetComponent<Life>();
+            if (life == null)
+            {
+                DrawTextAtEnt(ent, "Life is null.");
+                return;
+            }
+            DrawTextAtEnt(ent, $"HP: {life.CurHP} / {life.MaxHP} ({life.ReservedFlatHP} reserved {life.ReservedPercentHP}%)");
+            DrawTextAtEnt(ent, $"Mana: {life.CurMana} / {life.MaxMana} ({life.ReservedFlatMana} reserved {life.ReservedPercentMana}%)");
+            DrawTextAtEnt(ent, $"ES: {life.CurES} / {life.MaxES}");
+            // DrawTextAtEnt(ent, $"Fields: {life.Field0} {life.Field1} {life.Field2} {life.Field3}");
+
+		}
+
+        public static bool IsInMap(AreaController area)
+        {
+            var a = area.CurrentArea;
+			if (a == null || a.IsHideout || a.IsTown) return false;
+			return true;
+        }
+
+		public static bool HasEnoughRage(int rage)
+        {
+			if(TryGetBuffValue("rage", out int current))
+            {
+				return current >= rage;
+            }
+			return false;
+        }
+
+		public static bool HasEnoughMana(Entity ent, int mana)
+        {
+			if (!IsValid(ent)) return false;
+			var life = ent.GetComponent<Life>();
+			if (life == null) return false;
+			return life.CurMana > mana;
+        }
+
+    }
 }

@@ -2,9 +2,9 @@
 using System.Linq;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements.InventoryElements;
-using static Follower.Globals;
+using static Assistant.Globals;
 
-namespace Follower
+namespace Assistant
 {
     public class ItemQuery
     {

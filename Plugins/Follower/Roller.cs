@@ -9,9 +9,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WindowsInput.Native;
-using static Follower.Globals;
+using static Assistant.Globals;
 
-namespace Follower
+namespace Assistant
 {
     class Roller
     {
@@ -93,6 +93,7 @@ namespace Follower
             {
                 case "Metadata/Items/Jewels/JewelPassiveTreeExpansionSmall": OneStepWithSmallClusterJewel(); break;
                 case "Metadata/Items/Jewels/JewelPassiveTreeExpansionMedium": OneStepWithMediumClusterJewel(); break;
+				case "Metadata/Items/Rings/RingAtlas3": OneStepForMagicRing(); break;
             }
         }
         public static void Render()
@@ -203,6 +204,34 @@ namespace Follower
 			return true;
         }
 
+		static bool OneStepForMagicRing()
+        {
+			if (rollItemPath == null) return false;
+            var rollItem = Inventory.FindFirstNonMatch(rollItemPath, rollQuery);
+			if( rollItem == null)
+            {
+				return Pause($"Cannot find any {rollItemPath} item to roll.");
+            }
+			if (!rollItem.Item.HasComponent<Mods>())
+			{
+				return Pause("Cannot use Roller on item with no mods.");
+			}
+			var panel = Game.IngameState.IngameUi.InventoryPanel;
+			if (!panel.IsVisible)
+			{
+				return Pause("Cannot roll when inventory is closed.");
+			}
+			if (rollQuery.Matches(rollItem))
+			{
+				return Pause("Successfully rolled target mod.");
+			}
+			var mods = rollItem.Item.GetComponent<Mods>();
+			if (mods == null)
+			{
+				return Pause("Item has null Mods component.");
+			}
+			return true;
+        }
         static bool OneStepWithSmallClusterJewel()
         {
             if (rollItemPath == null) return false;

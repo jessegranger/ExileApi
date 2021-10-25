@@ -6,9 +6,9 @@ using System.Linq;
 using System.Windows.Forms;
 using WindowsInput;
 using WindowsInput.Native;
-using static Follower.Globals;
+using static Assistant.Globals;
 
-namespace Follower
+namespace Assistant
 {
     public class State
     {

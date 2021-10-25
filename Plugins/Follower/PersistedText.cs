@@ -5,7 +5,7 @@ using ExileCore.PoEMemory.MemoryObjects;
 using SharpDX;
 using System.Diagnostics;
 
-namespace Follower
+namespace Assistant
 {
     internal class PersistedText
     {

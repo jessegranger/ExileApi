@@ -5,11 +5,11 @@ using ExileCore.PoEMemory.Components;
 using ExileCore.Shared.Enums;
 using System.Collections.Generic;
 using ExileCore.PoEMemory.Elements;
-using static Follower.Globals;
+using static Assistant.Globals;
 
-namespace Follower
+namespace Assistant
 {
-	partial class Follower
+	partial class Assistant
 	{
 		class ChaosRecipe
 		{
@@ -42,19 +42,26 @@ namespace Follower
 			}
 			public void Render(Graphics G)
 			{
-				if( IsValid(mainHand) && HasParent(mainHand) ) G.DrawFrame(mainHand.GetClientRect(), Color.White, 2);
-				if( IsValid(offHand) && HasParent(offHand) ) G.DrawFrame(offHand.GetClientRect(), Color.White, 2);
-				if( IsValid(helmet) && HasParent(helmet) ) G.DrawFrame(helmet.GetClientRect(), Color.White, 2);
-				if( IsValid(boots) && HasParent(boots) ) G.DrawFrame(boots.GetClientRect(), Color.White, 2);
-				if( IsValid(gloves) && HasParent(gloves) ) G.DrawFrame(gloves.GetClientRect(), Color.White, 2);
-				if( IsValid(body) && HasParent(body) ) G.DrawFrame(body.GetClientRect(), Color.White, 2);
-				if( IsValid(ring1) && HasParent(ring1) ) G.DrawFrame(ring1.GetClientRect(), Color.White, 2);
-				if( IsValid(ring2) && HasParent(ring2) ) G.DrawFrame(ring2.GetClientRect(), Color.White, 2);
-				if( IsValid(amulet) && HasParent(amulet) ) G.DrawFrame(amulet.GetClientRect(), Color.White, 2);
-				if( IsValid(belt) && HasParent(belt) ) G.DrawFrame(belt.GetClientRect(), Color.White, 2);
 				var pos = Vector2.Zero;
-				G.DrawText(string.Format("Chaos Recipe: {0}", IsReady()), Vector2.Zero); pos.Y += 12f;
-
+				G.DrawText(string.Format("Chaos Recipe: {0}", IsReady()), pos); pos.Y += 12f;
+				if (IsValid(mainHand))
+				{
+					G.DrawFrame(mainHand.GetClientRect(), Color.White, 2);
+					G.DrawText($"Main Hand @ {mainHand.GetClientRect()}", pos); pos.Y += 12f;
+				}
+				if( IsValid(offHand) ) G.DrawFrame(offHand.GetClientRect(), Color.White, 2);
+				if( IsValid(helmet) ) G.DrawFrame(helmet.GetClientRect(), Color.White, 2);
+				if( IsValid(boots) ) G.DrawFrame(boots.GetClientRect(), Color.White, 2);
+				if( IsValid(gloves) ) G.DrawFrame(gloves.GetClientRect(), Color.White, 2);
+				if( IsValid(body) ) G.DrawFrame(body.GetClientRect(), Color.White, 2);
+				if (IsValid(ring1))
+				{
+					G.DrawFrame(ring1.GetClientRect(), Color.White, 2);
+					G.DrawText($"Ring 1 @ {ring1.GetClientRect()}", pos); pos.Y += 12f;
+				}
+				if( IsValid(ring2) ) G.DrawFrame(ring2.GetClientRect(), Color.White, 2);
+				if( IsValid(amulet) ) G.DrawFrame(amulet.GetClientRect(), Color.White, 2);
+				if( IsValid(belt) ) G.DrawFrame(belt.GetClientRect(), Color.White, 2);
 			}
 			private void Log(params string[] strings)
 			{

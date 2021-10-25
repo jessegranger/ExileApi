@@ -33,7 +33,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaticResources", "StaticRe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Updater", "Updater\Updater.csproj", "{80948544-24F3-47D0-A50E-31C5CA973040}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Follower", "Plugins\Follower\Follower.csproj", "{C91622E7-6AD2-487B-99F0-376BBFDE4296}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assistant", "Plugins\Follower\Assistant.csproj", "{C91622E7-6AD2-487B-99F0-376BBFDE4296}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoPilot", "Plugins\copilot\CoPilot.csproj", "{2C981B3F-CC18-486C-B0C0-1A4EC2BDD877}"
 EndProject
