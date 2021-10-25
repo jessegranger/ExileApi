@@ -9,7 +9,7 @@ namespace ExileCore.PoEMemory.Elements
         {
             get
             {
-                var readObjectAt = ReadObjectAt<Element>(0x250);
+                var readObjectAt = ReadObjectAt<Element>(0x290);
                 return readObjectAt.Address == 0 ? null : readObjectAt;
             }
         }
@@ -18,26 +18,26 @@ namespace ExileCore.PoEMemory.Elements
         {
             get
             {
-                var readObjectAt = ReadObjectAt<Entity>(0x258);
+                var readObjectAt = ReadObjectAt<Entity>(0x298);
                 return readObjectAt.Address == 0 ? null : readObjectAt;
             }
         }
 
         public string ItemOnHoverPath => ItemOnHover != null ? ItemOnHover.Path : "Null";
         public string LabelOnHoverText => LabelOnHover != null ? LabelOnHover.Text : "Null";
-        public int CountLabels => M.Read<int>(Address + 0x270);
-        public int CountLabels2 => M.Read<int>(Address + 0x2B0);
+        public int CountLabels => M.Read<int>(Address + 0x2B0);
+        public int CountLabels2 => M.Read<int>(Address + 0x2F0);
 
         public List<LabelOnGround> LabelsOnGround
         {
             get
             {
-                var address = M.Read<long>(Address + 0x2A8);
+                var address = M.Read<long>(Address + 0x2E8);
 
                 var result = new List<LabelOnGround>();
 
                 if (address <= 0)
-                    return null;
+                    return new List<LabelOnGround>();
 
                 var limit = 0;
 
@@ -51,7 +51,7 @@ namespace ExileCore.PoEMemory.Elements
                     limit++;
 
                     if (limit > 100000)
-                        return null;
+                        return new List<LabelOnGround>();
                 }
 
                 return result;

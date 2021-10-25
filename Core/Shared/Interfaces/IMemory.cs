@@ -40,6 +40,7 @@ namespace ExileCore.Shared.Interfaces
         byte[] ReadBytes(long addr, int size);
         byte[] ReadBytes(long addr, long size);
 
+        T[] ReadAsArray<T>(long addr, int size) where T : struct;
         List<T> ReadStructsArray<T>(long startAddress, long endAddress, int structSize, RemoteMemoryObject game)
             where T : RemoteMemoryObject, new();
 

@@ -24,7 +24,7 @@ namespace ExileCore.PoEMemory.Components
         public string Name => Cache.StringCache.Read($"{nameof(Render)}{RenderStruct.Name.buf}", () => RenderStruct.Name.ToString(M));
         public Vector3 Rotation => RenderStruct.Rotation;
         public Vector3 Bounds => RenderStruct.Bounds;
-        public Vector3 MeshRoration => RenderStruct.Rotation;
-        public float TerrainHeight => RenderStruct.Height > 0.01f ? RenderStruct.Height : 0f;
+        public Vector3 MeshRotation => RenderStruct.Rotation;
+        public float TerrainHeight => Height;
     }
 }

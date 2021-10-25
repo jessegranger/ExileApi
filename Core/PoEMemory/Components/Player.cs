@@ -21,7 +21,7 @@ namespace ExileCore.PoEMemory.Components
                 Address == 0 ? default : M.Read<PlayerComponentOffsets>(Address));
         }
 
-        public string PlayerName => NativeStringReader.ReadString(Address + 0x158, M);
+        public string PlayerName => NativeStringReader.ReadString(Address + 0x160, M);
         public uint XP => Address != 0 ? _player.Value.XP : 0;
         public int Strength => Address != 0 ? _player.Value.Strength : 0;
         public int Dexterity => Address != 0 ? _player.Value.Dexterity : 0;
@@ -64,13 +64,13 @@ namespace ExileCore.PoEMemory.Components
         [ObsoleteAttribute("Hideoutproperties are obsolete.", true)]
         public HideoutWrapper Hideout => ReadObject<HideoutWrapper>(Address + _player.Value.HideoutWrapperOffset);
 
-        public PantheonGod PantheonMinor => (PantheonGod) _player.Value.PantheonMinor;
-        public PantheonGod PantheonMajor => (PantheonGod) _player.Value.PantheonMajor;
+        public PantheonGod PantheonMinor => (PantheonGod)_player.Value.PantheonMinor;
+        public PantheonGod PantheonMajor => (PantheonGod)_player.Value.PantheonMajor;
 
         private IList<PassiveSkill> AllocatedPassivesM()
         {
             var result = new List<PassiveSkill>();
-            var passiveIds = TheGame.IngameState.ServerData.PassiveSkillIds;
+            var passiveIds = TheGame.IngameState.Data.ServerData.PassiveSkillIds;
 
             foreach (var id in passiveIds)
             {
@@ -144,21 +144,24 @@ namespace ExileCore.PoEMemory.Components
         {
             get
             {
-                var result = new List<TrialState>();
-                var passStates = TrialPassStates;
+                return new List<TrialState>(); // TODO: Files do not load.
+                //var result = new List<TrialState>();
+                //var passStates = TrialPassStates;
 
-                foreach (var trialAreaId in LabyrinthTrials.LabyrinthTrialAreaIds)
-                {
-                    var wrapper = TheGame.Files.LabyrinthTrials.GetLabyrinthTrialByAreaId(trialAreaId);
+                //foreach (var trialAreaId in LabyrinthTrials.LabyrinthTrialAreaIds)
+                //{
+                //    var wrapper = TheGame.Files.LabyrinthTrials.GetLabyrinthTrialByAreaId(trialAreaId);
 
-                    result.Add(
-                        new TrialState
-                        {
-                            TrialAreaId = trialAreaId, TrialArea = wrapper, IsCompleted = passStates.Get(wrapper.Id - 1)
-                        });
-                }
+                //    result.Add(
+                //        new TrialState
+                //        {
+                //            TrialAreaId = trialAreaId,
+                //            TrialArea = wrapper,
+                //            IsCompleted = passStates.Get(wrapper.Id - 1)
+                //        });
+                //}
 
-                return result;
+                //return result;
             }
         }
 

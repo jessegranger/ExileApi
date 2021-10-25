@@ -6,8 +6,8 @@ namespace ExileCore.PoEMemory
 {
     public class Offsets
     {
-        public static Offsets Regular = new Offsets {IgsOffset = 0, IgsDelta = 0, ExeName = "PathOfExile"};
-        public static Offsets Korean = new Offsets {IgsOffset = 0, IgsDelta = 0, ExeName = "Pathofexile_KG"};
+        public static Offsets Regular = new Offsets { IgsOffset = 0, IgsDelta = 0, ExeName = "PathOfExile" };
+        public static Offsets Korean = new Offsets { IgsOffset = 0, IgsDelta = 0, ExeName = "Pathofexile_KG" };
 
         /* FileRoot Pointer
         00007FF6C47EED01  | 48 8D 0D A8 23 7F 00               | lea rcx,qword ptr ds:[7FF6C4FE10B0]        | <--FileRootPtr
@@ -49,12 +49,12 @@ namespace ExileCore.PoEMemory
             new Pattern(
                 new byte[]
                 {
-                    0xE8, 
-                    0x00, 0x00, 0x00, 0x00, 
-                    0xE8, 
-                    0x00, 0x00, 0x00, 0x00, 
+                    0xFF,
+                    0x00, 0x00, 0x00, 0x00, 0x00,
+                    0xE8,
+                    0x00, 0x00, 0x00, 0x00,
                     0xFF, 0x05
-                }, "x????x????xx", "Area change", 9430000);
+                }, "x?????x????xx", "Area change", 9430000);
 
         /*
        140094573 48 83 ec 20     SUB        RSP,0x20
@@ -87,19 +87,17 @@ namespace ExileCore.PoEMemory
         public Dictionary<OffsetsName, long> DoPatternScans(IMemory m)
         {
             var array = m.FindPatterns(FileRootPattern, AreaChangePattern, GameStatePattern);
-
             var result = new Dictionary<OffsetsName, long>();
 
             var index = 0;
             var baseAddress = m.Process.MainModule.BaseAddress.ToInt64();
-
-            FileRoot = m.Read<int>(baseAddress + array[index] + 6) + array[index] + 10;
+            FileRoot = m.Read<int>(baseAddress + array[index] + 0x6) + array[index] + 0xA;
             index++;
 
-            AreaChangeCount = m.Read<int>(baseAddress + array[index] + 0xC) + array[index] + 0x10;
+            AreaChangeCount = m.Read<int>(baseAddress + array[index] + 0xD) + array[index] + 0x11;
             index++;
 
-            GameStateOffset = m.Read<int>(baseAddress + array[index] + 8) + array[index] + 12;
+            GameStateOffset = m.Read<int>(baseAddress + array[index] + 0x8) + array[index] + 0xC;
 
             result.Add(OffsetsName.FileRoot, FileRoot);
             result.Add(OffsetsName.AreaChangeCount, AreaChangeCount);
