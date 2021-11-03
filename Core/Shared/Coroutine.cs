@@ -15,7 +15,7 @@ namespace ExileCore.Shared
         {
             Name = name ?? MathHepler.GetRandomWord(13);
 
-            OwnerName = owner == null ? "Free" : owner.GetType().Namespace;
+            OwnerName = owner == null ? "Free" : owner.InternalName;
         }
 
         public Coroutine(Action action, IYieldBase condition, IPlugin owner, string name = null, bool infinity = true,
@@ -105,6 +105,11 @@ namespace ExileCore.Shared
         public event Action OnAutoRestart;
         public event EventHandler WhenDone;
 
+        [Obsolete("Coroutine.UpdateCondtion(...) => Use UpdateCondition()", false)]
+        public void UpdateCondtion(IYieldBase condition)
+        {
+            UpdateCondition(condition);
+        }
         public void UpdateCondition(IYieldBase condition)
         {
             switch (condition)
