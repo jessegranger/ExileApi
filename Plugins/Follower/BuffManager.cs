@@ -25,7 +25,7 @@ namespace Assistant
             Settings = settings;
             InputManager.OnRelease(VirtualKeyCode.F3, () => Paused = false);
             InputManager.OnRelease(VirtualKeyCode.PAUSE, () => Paused = !Paused);
-            // PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.005f, .085f), 0);
+            // PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.72f, .85f), 0);
         }
 
         private static string GetStatusText() => $"BuffManager[{(Paused ? "Paused" : "Running")}]";
@@ -60,15 +60,31 @@ namespace Assistant
             if (HasBuff("grace_period")) return;
             foreach(var buff in vaalBuffsToMaintain)
             {
-                if (!(buff.Node?.Value ?? false)) continue;
-                try { if (!buff.Condition()) continue; }
-                catch(Exception err)
+                // string status = $"Maintain Vaal: {buff.BuffName} ";
+                if (buff.Node?.Value ?? false)
                 {
-                    Log($"Exception: {err.ToString()}");
-                    continue;
+                    bool needsBuff = false;
+                    try
+                    {
+                        needsBuff = buff.Condition();
+                    }
+                    catch (Exception err)
+                    {
+                        // status += $"Exception: {err.ToString()}";
+                        Log(err.ToString());
+                    }
+                    if( needsBuff )
+                    {
+                        if (!HasBuff(buff.BuffName))
+                        {
+                            SkillManager.TryUseVaalSkill(buff.SkillName, buff.Key);
+                        // } else { status += "Has Buff.";
+                        }
+                    // } else { status += "Not needed.";
+                    }
+                // } else { status += "Disabled.";
                 }
-                if (HasBuff(buff.BuffName)) continue;
-                SkillManager.TryUseVaalSkill(buff.SkillName, buff.Key);
+                // DrawTextAtPlayer(status);
             }
             foreach(var buff in buffsToMaintain)
             {
