@@ -70,7 +70,13 @@ namespace Assistant
 			if (!panel.IsVisible) return null;
 			var playerInventory = panel[InventoryIndex.PlayerInventory];
 			if (playerInventory == null) return null;
-			return playerInventory.VisibleInventoryItems.FirstOrDefault((item) => IsValid(item) && item.Item.Path.Equals(path) && ! query.Matches(item));
+			foreach(var item in playerInventory.VisibleInventoryItems )
+            {
+				if (!IsValid(item)) continue;
+				if (!item.Item.Path.Equals(path)) continue;
+				if (!query.Matches(item)) return item;
+            }
+			return null;
 		}
 
 		public static int CountMatchingMods(List<ItemMod> itemMods, params string[] targetMods)
@@ -102,8 +108,8 @@ namespace Assistant
 
 			var centerOne = useItem.GetClientRect().Center;
 			var centerTwo = item.GetClientRect().Center;
-			InputManager.Add(new RightClickAt(Game.Window, centerOne.X, centerOne.Y, 20,
-				new LeftClickAt(Game.Window, centerTwo.X, centerTwo.Y, 20)));
+			InputManager.Add(new RightClickAt(Game.Window, centerOne.X, centerOne.Y, 30,
+					new LeftClickAt(Game.Window, centerTwo.X, centerTwo.Y, 30)));
 			return true;
 		}
 
