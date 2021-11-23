@@ -71,15 +71,12 @@ namespace Assistant
             Game = game;
             Gfx = gfx;
             IsInitialised = true;
+			InputManager.OnRelease(VirtualKeyCode.ESCAPE, () => Paused = true);
+			InputManager.OnRelease(VirtualKeyCode.PAUSE, () => Paused = true);
         }
         public static void Tick(long dt)
         {
             if (!Ready()) return;
-            if (InputManager.IsPressed(VirtualKeyCode.ESCAPE))
-            {
-                Paused = true;
-                return;
-            }
             if (rollTimer.IsRunning && rollTimer.ElapsedMilliseconds < IntervalMilliseconds) return;
             rollTimer.Restart();
             if (StepCount >= MaxSteps)
@@ -94,6 +91,7 @@ namespace Assistant
                 case "Metadata/Items/Jewels/JewelPassiveTreeExpansionSmall": OneStepWithSmallClusterJewel(); break;
                 case "Metadata/Items/Jewels/JewelPassiveTreeExpansionMedium": OneStepWithMediumClusterJewel(); break;
 				case "Metadata/Items/Rings/RingAtlas3": OneStepForMagicRing(); break;
+				case "Metadata/Items/Weapons/OneHandWeapons/Wands/Wand14": OneStepForMagicWand(); break;
             }
         }
         public static void Render()
@@ -230,6 +228,51 @@ namespace Assistant
 			{
 				return Pause("Item has null Mods component.");
 			}
+			return true;
+        }
+		static bool OneStepForMagicWand()
+        {
+			if (rollItemPath == null) return false;
+			var rollItem = Inventory.FindFirstNonMatch(rollItemPath, rollQuery);
+			if( rollItem == null )
+            {
+				return Pause($"Cannot find any {rollItemPath} item to roll.");
+            }
+			if (!rollItem.Item.HasComponent<Mods>())
+			{
+				return Pause("Cannot use Roller on item with no mods.");
+			}
+			var panel = Game.IngameState.IngameUi.InventoryPanel;
+			if (!panel.IsVisible)
+			{
+				return Pause("Cannot roll when inventory is closed.");
+			}
+			if (rollQuery.Matches(rollItem))
+			{
+				return Pause("Successfully rolled target mod.");
+            }
+			var mods = rollItem.Item.GetComponent<Mods>();
+			if( mods == null )
+            {
+				return Pause("Item has null Mods component.");
+            }
+			switch (mods.ItemRarity)
+            {
+				case ItemRarity.Normal: UpgradeToMagic(rollItem); break;
+				case ItemRarity.Magic:
+					switch(mods.ItemMods.Count)
+                    {
+						case 0:
+						case 1:
+						case 2:
+						case 3: AddModToMagic(rollItem); break;
+						case 4: RerollMagic(rollItem); break;
+						default: return Pause($"Cannot handle mods count {mods.ItemMods.Count}");
+                    }
+					break;
+				default:
+					return Pause($"Cannot roll rarity: {mods.ItemRarity}");
+            }
 			return true;
         }
         static bool OneStepWithSmallClusterJewel()
