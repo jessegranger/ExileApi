@@ -222,5 +222,8 @@ namespace Assistant
 			return life.CurMana > mana;
         }
 
+        public static bool IsAlive(Entity ent) => IsValid(ent) && (ent.GetComponent<Life>()?.CurHP ?? 0) > 0;
+
+
     }
 }
