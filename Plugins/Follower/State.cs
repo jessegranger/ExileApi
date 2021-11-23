@@ -187,6 +187,12 @@ namespace Assistant
     class InputState : State
     {
         protected readonly static InputSimulator input = new InputSimulator();
+        protected readonly static Stopwatch timer = new Stopwatch();
+        protected readonly static bool debug = true;
+        static InputState()
+        {
+            timer.Start();
+        }
         protected InputState(State next = null) : base(next) { }
         public override State OnTick() => Next;
     }
@@ -202,6 +208,7 @@ namespace Assistant
         public KeyDown(VirtualKeyCode key, State next = null) : base(key, next) { }
         public override State OnTick()
         {
+            if( debug ) Log($"{timer.ElapsedMilliseconds}: KeyDown {Key}");
             input.Keyboard.KeyDown(Key);
             return Next;
         }
@@ -212,6 +219,7 @@ namespace Assistant
         public KeyUp(VirtualKeyCode key, State next = null) : base(key, next) { }
         public override State OnTick()
         {
+            if( debug ) Log($"{timer.ElapsedMilliseconds}: KeyUp {Key}");
             input.Keyboard.KeyUp(Key);
             return Next;
         }
@@ -226,9 +234,8 @@ namespace Assistant
         public override State OnEnter() => Next;
     }
 
-    class MoveMouse : State
+    class MoveMouse : InputState
     {
-        private readonly static InputSimulator input = new InputSimulator();
         private readonly GameWindow Window;
         public readonly float X;
         public readonly float Y;
@@ -242,6 +249,7 @@ namespace Assistant
             if (Window == null) return Next;
             var w = Window.GetWindowRectangleTimeCache;
             var bounds = Screen.PrimaryScreen.Bounds;
+            if( debug ) Log($"{timer.ElapsedMilliseconds}: MouseMove {X} {Y}");
             input.Mouse.MoveMouseTo(
                 (w.Left + X) * 65535 / bounds.Width,
                 (w.Top + Y) * 65535 / bounds.Height);
@@ -253,6 +261,7 @@ namespace Assistant
         public LeftMouseDown(State next = null) : base(next) { }
         public override State OnTick()
         {
+            if( debug ) Log($"{timer.ElapsedMilliseconds}: LeftMouseDown");
             input.Mouse.LeftButtonDown();
             return Next;
         }
@@ -263,6 +272,7 @@ namespace Assistant
         public LeftMouseUp(State next = null) : base(next) { }
         public override State OnTick()
         {
+            if (debug) Log($"{timer.ElapsedMilliseconds}: LeftMouseUp");
             input.Mouse.LeftButtonUp();
             return Next;
         }
@@ -288,6 +298,7 @@ namespace Assistant
         public RightMouseDown(State next = null) : base(next) { }
         public override State OnTick()
         {
+            if (debug) Log($"{timer.ElapsedMilliseconds}: RightButtonDown");
             input.Mouse.RightButtonDown();
             return Next;
         }
@@ -298,6 +309,7 @@ namespace Assistant
         public RightMouseUp(State next = null) : base(next) { }
         public override State OnTick()
         {
+            if (debug) Log($"{timer.ElapsedMilliseconds}: RightButtonUp");
             input.Mouse.RightButtonUp();
             return Next;
         }
