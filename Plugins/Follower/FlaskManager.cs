@@ -117,6 +117,8 @@ namespace Assistant
             public int Duration;
             public bool IsInstant;
             public bool IsInstantOnLowLife;
+            public bool EnchantUseOnFull;
+            public bool EnchantUseOnHitRare;
             public bool IsFull => CurrentCharges >= MaxCharges;
             public bool HasEnoughCharge => CurrentCharges >= ChargesPerUse;
             public bool IsUsable(int cooldown) => HasEnoughCharge && GlobalTimer.ElapsedMilliseconds > 200 && ((!Timer.IsRunning) || Timer.ElapsedMilliseconds > cooldown);
@@ -163,6 +165,12 @@ namespace Assistant
                             case "FlaskIncreasedDuration":
                                 flask.Duration = (int)((float)flask.Duration * ((100 + mod.Value1) / 100f));
                                 break;
+                            case "FlaskEnchantmentInjectorOnFullCharges":
+                                flask.EnchantUseOnFull = true;
+                                break;
+                            case "FlaskEnchantmentInjectorOnHittingRareOrUnique":
+                                flask.EnchantUseOnHitRare = true;
+                                break;
                             case "FlaskExtraCharges":
                                 flask.MaxCharges += mod.Value1;
                                 break;
@@ -179,7 +187,7 @@ namespace Assistant
                                 flask.IsInstant = true;
                                 flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .25f);
                                 break;
-                            case "FlaskRemovesBleeding":
+                            case "FlaskBleedCorruptingBloodImmunity":
                                 if (linkToConditions)
                                 {
                                     LinkConditionToFlask("bleeding", flask);
@@ -192,7 +200,9 @@ namespace Assistant
                                 break;
                             case "FlaskRemovesShock": if (linkToConditions) LinkConditionToFlask("shocked", flask); break;
                             case "FlaskCurseImmunity": if (linkToConditions) LinkConditionToFlask("cursed", flask); break;
-                            case "FlaskDispellsChill": if (linkToConditions) LinkConditionToFlask("frozen", flask); break;
+                            case "FlaskChillFreezeImmunity":
+                            case "FlaskFreezeAndChillImmunityDuringEffect":
+                                if (linkToConditions) LinkConditionToFlask("frozen", flask); break;
                             case "FlaskDispellsBurning": if (linkToConditions) LinkConditionToFlask("burning", flask); break;
                             case "FlaskDispellsPoison": if (linkToConditions) LinkConditionToFlask("poisoned", flask); break;
                         }
@@ -233,10 +243,10 @@ namespace Assistant
                 Paused = !Paused;
                 Log($"FlaskManager: {(Paused ? "Paused" : "Resumed")}");
             });
-            PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.25f, .89f), 0);
+            PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.307f, .985f), 0);
         }
 
-        private static string GetStatusText() => $"Flasks [{(Paused ? "Paused" : "Running")}]";
+        private static string GetStatusText() => $"[{(Paused ? "=" : ">")}]";
 
         private static Dictionary<string, Flask> conditionMap = new Dictionary<string, Flask>();
         private static bool TryGetFlaskForCondition(string condition, out Flask flask) => conditionMap.TryGetValue(condition, out flask);
@@ -249,7 +259,10 @@ namespace Assistant
         public static void RefreshFlaskMods() => updateFlaskMods = true;
         private static void UpdateFlasks()
         {
-            if (!IsValid(api)) return;
+            if (!IsValid(api))
+            {
+                return;
+            }
             var playerInventories = api.Game.IngameState.ServerData.PlayerInventories;
             if (playerInventories == null || playerInventories.Count == 0)
             {
@@ -334,6 +347,15 @@ namespace Assistant
                         Log($"Flask Mod: {mod.Name} {mod.Value1}");
                         switch (mod.Name)
                         {
+                            case "FlaskIncreasedDuration":
+                                flask.Duration = (int)((float)flask.Duration * ((100 + mod.Value1) / 100f));
+                                break;
+                            case "FlaskEnchantmentInjectorOnFullCharges":
+                                flask.EnchantUseOnFull = true;
+                                break;
+                            case "FlaskEnchantmentInjectorOnHittingRareOrUnique":
+                                flask.EnchantUseOnHitRare = true;
+                                break;
                             case "FlaskExtraCharges":
                                 flask.MaxCharges += mod.Value1;
                                 break;
@@ -349,9 +371,11 @@ namespace Assistant
                                 flask.IsInstant = true;
                                 flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .25f);
                                 break;
-                            case "FlaskRemovesBleeding": 
+                            case "FlaskRemovesBleeding":
+                            case "FlaskBleedCorruptingBloodImmunity":
                                 LinkConditionToFlask("bleeding", flask);
                                 LinkConditionToFlask("corrupted_blood", flask);
+                                LinkConditionToFlask("corrupting_blood", flask);
                                 break;
                             case "FlaskEffectNotRemovedOnFullMana":
                                 flask.ManaHealAmount = (int)((float)flask.ManaHealAmount * .70f);
@@ -359,7 +383,10 @@ namespace Assistant
                                 break;
                             case "FlaskRemovesShock": LinkConditionToFlask("shocked", flask); break;
                             case "FlaskCurseImmunity": LinkConditionToFlask("cursed", flask); break;
-                            case "FlaskDispellsChill": LinkConditionToFlask("frozen", flask); break;
+                            case "FlaskDispellsChill":
+                            case "FlaskChillFreezeImmunity":
+                            case "FlaskFreezeAndChillImmunityDuringEffect":
+                                LinkConditionToFlask("frozen", flask); break;
                             case "FlaskDispellsBurning": LinkConditionToFlask("burning", flask); break;
                             case "FlaskDispellsPoison": LinkConditionToFlask("poisoned", flask); break;
                         }
@@ -398,7 +425,10 @@ namespace Assistant
             var r = new System.Random();
             foreach(var flask in flasks)
             {
-                if( flask.IsFull && flask.LifeHealAmount == 0 && flask.ManaHealAmount == 0 && flask.UseFlask(3000 + r.Next(1,100)) )
+                if( flask.IsFull && flask.LifeHealAmount == 0 && flask.ManaHealAmount == 0 
+                    && (! flask.EnchantUseOnFull)
+                    && (! flask.EnchantUseOnHitRare)
+                    && flask.UseFlask(3000 + r.Next(1,100)) )
                 {
                     return true;
                 }
@@ -422,9 +452,9 @@ namespace Assistant
             {
                 if (conditionMap.TryGetValue("cursed", out Flask flask))
                 {
-                    if (flask.IsUsable(4800))
+                    if (flask.IsUsable(4000))
                     {
-                        return flask.UseFlask(4800);
+                        return flask.UseFlask(4000);
                     }
                 }
             }
@@ -435,12 +465,15 @@ namespace Assistant
             var maxMana = life.MaxMana - life.ReservedFlatMana;
             var curMana = life.CurMana;
             var manaThreshold = maxMana * .4f;
-            if (curMana < manaThreshold)
+            if (curMana < manaThreshold && ! HasAnyBuff("flask_effect_mana"))
             {
+
                 foreach (var flask in flasks)
                 {
-                    if (!(flask.ManaHealAmount > 0 && flask.IsUsable(200))) continue;
-                    return flask.UseFlask(200);
+                    if( flask.ManaHealAmount > 0 && flask.IsUsable(200))
+                    {
+                        return flask.UseFlask(200);
+                    }
                 }
             }
             return false;
@@ -448,10 +481,13 @@ namespace Assistant
 
         private static bool CheckLifeFlasks(Life life)
         {
-            var maxHp = life.MaxHP - life.ReservedFlatHP;
+            var maxHp = life.MaxHP - life.TotalReservedHP;
             var curHp = life.CurHP;
+            // at what point does the game consider you "low life" condition
+            var isLowLife = curHp <= life.MaxHP / 2;
+            // at what point should we use a flask
             var lifeThreshold = maxHp / 2;
-            // DrawTextAtPlayer($"CheckLifeFlasks: {curHp} > {lifeThreshold}");
+            if(Settings.DebugLife.Value) DrawTextAtPlayer($"CheckLifeFlasks: {curHp} > {lifeThreshold}");
             if (curHp <= lifeThreshold)
             {
                 Flask instantFlask = null;
@@ -459,7 +495,7 @@ namespace Assistant
                 foreach (var flask in flasks)
                 {
                     if (!(flask.LifeHealAmount > 0 && flask.IsUsable(200))) continue;
-                    if (flask.IsInstant || (flask.IsInstantOnLowLife && life.HPPercentage <= .5))
+                    if (flask.IsInstant || (flask.IsInstantOnLowLife && isLowLife))
                     {
                         instantFlask = instantFlask ?? flask;
                     }
@@ -469,7 +505,9 @@ namespace Assistant
                     }
                 }
                 if (instantFlask != null) { return instantFlask.UseFlask(200); }
-                else if (slowFlask != null) { return slowFlask.UseFlask(200); }
+                else if (slowFlask != null) {
+                    return HasBuff("flask_effect_life") || slowFlask.UseFlask(200);
+                }
             }
             return false;
         }
