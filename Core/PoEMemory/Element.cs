@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.Shared.Cache;
 using ExileCore.Shared.Helpers;
 using GameOffsets;
-using MoreLinq;
 using SharpDX;
 
 namespace ExileCore.PoEMemory
@@ -13,7 +13,7 @@ namespace ExileCore.PoEMemory
     public class Element : RemoteMemoryObject
     {
         public const int OffsetBuffers = 0;
-        private static readonly int IsVisibleLocalOff = Extensions.GetOffset<ElementOffsets>(nameof(ElementOffsets.IsVisibleLocal));
+        private static readonly int IsVisibleLocalOffset = Extensions.GetOffset<ElementOffsets>(nameof(ElementOffsets.IsVisibleLocal));
         private static readonly int ChildStartOffset = Extensions.GetOffset<ElementOffsets>(nameof(ElementOffsets.ChildStart));
 
         // dd id
@@ -31,7 +31,7 @@ namespace ExileCore.PoEMemory
         public Element()
         {
             _cacheElement = new FrameCache<ElementOffsets>(() => Address == 0 ? default : M.Read<ElementOffsets>(Address));
-            _cacheElementIsVisibleLocal = new FrameCache<bool>(() => Address != 0 && M.Read<bool>(Address + IsVisibleLocalOff));
+            _cacheElementIsVisibleLocal = new FrameCache<bool>(() => Address != 0 && M.Read<bool>(Address + IsVisibleLocalOffset));
         }
 
         public ElementOffsets Elem => _cacheElement.Value;
@@ -84,6 +84,30 @@ namespace ExileCore.PoEMemory
             _getClientRect?.Value ?? (_getClientRect = new TimeCache<RectangleF>(GetClientRect, 200)).Value;
         public Element this[int index] => GetChildAtIndex(index);
 
+        public int? IndexInParent => Parent?.Children.IndexOf(this);
+
+        public string PathFromRoot
+        {
+            get
+            {
+                var parentChain = GetParentChain();
+                if (parentChain.Count != 0)
+                {
+                    parentChain.RemoveAt(parentChain.Count - 1);
+                    parentChain.Reverse();
+                }
+                parentChain.Add(this);
+                var properties = (from property in TheGame.IngameState.IngameUi.GetType().GetProperties()
+                                  where typeof(Element).IsAssignableFrom(property.PropertyType)
+                                  where property.GetIndexParameters().Length == 0
+                                  let value = property.GetValue(TheGame.IngameState.IngameUi) as Element
+                                  where value.Address == parentChain.First().Address
+                                  select property.Name).ToList();
+
+                return (properties.Count > 0 ? $"({properties.First()})" : "") + string.Join("->", parentChain.Select(x => x.IndexInParent));
+            }
+        }
+
         protected List<Element> GetChildren<T>() where T : Element
         {
             var e = Elem;
@@ -112,7 +136,7 @@ namespace ExileCore.PoEMemory
             return pointers.Count != ChildCount ? new List<T>() : pointers.Select(GetObject<T>).ToList();
         }
 
-        private IList<Element> GetParentChain()
+        private List<Element> GetParentChain()
         {
             var list = new List<Element>();
 
@@ -171,23 +195,40 @@ namespace ExileCore.PoEMemory
         {
             var currentElement = this;
 
-            foreach (var index in indices)
+            StringBuilder BuildErrorString(int errorIndex)
             {
+                var str = new StringBuilder();
+                foreach (var i in indices)
+                {
+                    if (i == errorIndex)
+                    {
+                        str.Append('>');
+                    }
+
+                    str.AppendFormat("[{0}] ", i);
+                    if (i == errorIndex)
+                    {
+                        str.Append('<');
+                    }
+                }
+
+                return str;
+            }
+
+            for (var indexNumber = 0; indexNumber < indices.Length; indexNumber++)
+            {
+                var index = indices[indexNumber];
                 currentElement = currentElement.GetChildAtIndex(index);
 
                 if (currentElement == null)
                 {
-                    var str = "";
-                    indices.ForEach(i => str += $"[{i}] ");
-                    DebugWindow.LogMsg($"{nameof(Element)} with index: {index} not found. Indices: {str}");
+                    DebugWindow.LogMsg($"{nameof(Element)} with index {index} was not found. Indices: {BuildErrorString(indexNumber)}");
                     return null;
                 }
 
                 if (currentElement.Address == 0)
                 {
-                    var str = "";
-                    indices.ForEach(i => str += $"[{i}] ");
-                    DebugWindow.LogMsg($"{nameof(Element)} with index: {index} 0 address. Indices: {str}");
+                    DebugWindow.LogMsg($"{nameof(Element)} with index {index} has address = 0. Indices: {BuildErrorString(indexNumber)}");
                     return GetObject<Element>(0);
                 }
             }

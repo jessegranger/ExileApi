@@ -82,6 +82,11 @@ namespace ExileCore.PoEMemory.MemoryObjects
         public WorldMapElement AreaInstanceUi => GetObject<WorldMapElement>(IngameUIElementsStruct.AreaInstanceUi);
         public WorldMapElement WorldMap => GetObject<WorldMapElement>(IngameUIElementsStruct.WorldMap);
         public MetamorphWindowElement MetamorphWindow => GetObject<MetamorphWindowElement>(IngameUIElementsStruct.MetamorphWindow);
+        public Element HeistContractWindow => GetObject<Element>(IngameUIElementsStruct.HeistContractPanel);
+        public Element HeistRevealWindow => GetObject<Element>(IngameUIElementsStruct.HeistRevealPanel);
+        public Element HeistAllyEquipmentWindow => GetObject<Element>(IngameUIElementsStruct.HeistAllyEquipmentPanel);
+        public Element HeistBlueprintWindow => GetObject<Element>(IngameUIElementsStruct.HeistBlueprintPanel);
+        public Element HeistLockerWindow => GetObject<Element>(IngameUIElementsStruct.HeistLockerPanel);
         public RitualWindow RitualWindow => GetObject<RitualWindow>(IngameUIElementsStruct.RitualWindow);
         public Element RitualFavourWindow => GetObject<Element>(IngameUIElementsStruct.RitualFavourPanel);
         public Element UltimatumProgressWindow => GetObject<Element>(IngameUIElementsStruct.UltimatumProgressPanel);
@@ -97,7 +102,7 @@ namespace ExileCore.PoEMemory.MemoryObjects
 
         private List<QuestState> GenerateQuestStates()
         {
-            var result = new List<QuestState>();
+            var result = new Dictionary<string, QuestState>();
             /*
              * This is definitely not the most performant way to get the quest.
              * 9 quests are missing (e.g. a10q2). 
@@ -108,12 +113,12 @@ namespace ExileCore.PoEMemory.MemoryObjects
                 var addressOfQuest = M.Read<long>(pointerToQuest);
 
                 var questState = GetObject<QuestState>(addressOfQuest);
-                if (questState?.Quest == null) continue;
-                if (result.Any(r => r.Quest?.Id == questState.Quest?.Id)) continue; // skip entries which are already in the list
-                result.Add(questState);
+                var quest = questState?.Quest;
+                if (quest == null) continue;
+                if (!result.ContainsKey(quest.Id)) result.Add(quest.Id, questState);
             }
 
-            return result;
+            return result.Values.ToList();
         }
     }
 }
