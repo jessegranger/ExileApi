@@ -1,7 +1,9 @@
 ﻿using ExileCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using WindowsInput;
@@ -45,14 +47,54 @@ namespace Assistant
             public override string ToString() => $"TK-{Key}";
         }
 
+        static InputManager()
+        {
+            pressTimer.Start();
+        }
+
+        private static Stopwatch pressTimer = new Stopwatch();
+        private static Dictionary<VirtualKeyCode, long> lastPressTime = new Dictionary<VirtualKeyCode, long>();
+
         public static void OnRelease(VirtualKeyCode key, Action action) => Add(new KeyTracker(key, action));
         public static void PressKey(VirtualKeyCode Key, uint duration) => Add(new PressKey(Key, duration));
+        public static void PressKey(VirtualKeyCode Key, uint duration, uint throttle_ms)
+        {
+            long now = pressTimer.ElapsedMilliseconds;
+            if( lastPressTime.TryGetValue(Key, out long last) )
+            {
+                if (now - last < throttle_ms) return;
+            }
+            lastPressTime[Key] = now;
+            Add(new PressKey(Key, duration));
+        }
         public static void LeftClickAt(float x, float y, uint duration) => Add(new LeftClickAt(GameController.Window, x, y, duration));
         public static void RightClickAt(float x, float y, uint duration) => Add(new RightClickAt(GameController.Window, x, y, duration));
         public static void LeftClickAt(SharpDX.RectangleF rect, uint duration) => LeftClickAt(rect.Center.X, rect.Center.Y, duration);
         public static void RightClickAt(SharpDX.RectangleF rect, uint duration) => RightClickAt(rect.Center.X, rect.Center.Y, duration);
         internal static bool IsPressed(VirtualKeyCode key) => input.InputDeviceState.IsHardwareKeyDown(key);
         public static void Add(State state) => Machine.Add(state);
-        public static void OnTick() => Machine.OnTick();
+        private static bool AllowInputInChatBox = false;
+        public static void OnTick() {
+            if (!IsValid(GameController)) return;
+            if (!AllowInputInChatBox)
+            {
+                var chat = GameController.IngameState.IngameUi.ChatBoxRoot;
+                if (chat != null && chat.IsValid && chat.IsActive) return;
+            }
+            Machine.OnTick();
+        }
+        [DllImport("user32.dll")] private static extern short VkKeyScanA(char ch);
+
+        public static void ChatCommand(string v)
+        {
+            State start = new ActionState(() => { AllowInputInChatBox = true; });
+            start
+                .Then(new PressKey(VirtualKeyCode.RETURN, 30))
+                .Then(v.Select((c) => new PressKey((VirtualKeyCode)VkKeyScanA(c), 10)).ToArray())
+                .Then(new PressKey(VirtualKeyCode.RETURN, 30))
+                .Then(() => { AllowInputInChatBox = false; })
+                ;
+            Add(start);
+        }
     }
 }
