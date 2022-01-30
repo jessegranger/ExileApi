@@ -29,12 +29,37 @@ namespace Assistant
 
         // OnAbort gets called (by a StateMachine), to ask a State to clean up any incomplete work immediately (before returning).
         public virtual void OnAbort() { }
+        public virtual State Then(State next)
+        {
+            Next = next;
+            return lastNext();
+        }
+        public virtual State Then(params State[] next)
+        {
+            State cursor = this;
+            foreach(State s in next)
+            {
+                cursor = cursor.Then(s);
+            }
+            return cursor.lastNext();
+        }
+        public virtual State Then(Action action)
+        {
+            Next = new ActionState(action);
+            return lastNext();
+        }
+        private State lastNext()
+        {
+            if (Next == null) return this;
+            else return Next.lastNext();
+        }
 
         // A friendly name for the State, the class name by default.
         public virtual string Name => GetType().Name.Split('.').Last();
 
         // A verbose description of the State, that includes the Name of the next State (if known).
         public override string ToString() => $"{Name}{(Next == null ? "" : " then " + Next.Name)}";
+        public virtual string Describe() => $"{Name}{(Next == null ? " end" : " then " + Next.Describe())}";
 
         // You can create a new State using any Func<State, State>
         public static State Create(string label, Func<State, State> func) => new Runner(label, func);
@@ -105,8 +130,14 @@ namespace Assistant
             private static Stopwatch machineTimer = new Stopwatch();
             static Machine() => machineTimer.Start();
 
+            public void Pause() => Paused = true;
+            public void Resume() => Paused = false;
+            public void TogglePause() => Paused = !Paused;
+            private bool Paused = false;
+
             public override State OnTick()
             {
+                if (Paused) return this;
                 // Each State in the States list will be ticked "in parallel" (all get ticked each frame)
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
@@ -169,8 +200,20 @@ namespace Assistant
         }
 
     }
+    public class ActionState : State // An ActionState calls an Action one time and then proceeds.
+    {
+        public readonly Action Act;
+        public ActionState(Action action, State next = null):base(next) => Act = action;
 
-    public class Delay : State
+        public override State OnTick()
+        {
+            Act?.Invoke();
+            return Next;
+        }
+
+    }
+
+    public class Delay : State // Delay is a State that waits for a fixed number of milliseconds
     {
         Stopwatch sw = new Stopwatch();
         readonly uint ms;
