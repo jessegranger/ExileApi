@@ -32,6 +32,7 @@ namespace Assistant
 
         private static List<BuffToMaintain> vaalBuffsToMaintain = new List<BuffToMaintain>();
         private static List<BuffToMaintain> buffsToMaintain = new List<BuffToMaintain>();
+        private static List<BuffToMaintain> buffsToClear = new List<BuffToMaintain>();
         public static void MaintainVaalBuff(ToggleNode config, string skillName, string buffName, VirtualKeyCode key)
         {
             vaalBuffsToMaintain.Add(new BuffToMaintain() { Node = config, SkillName = skillName, BuffName = buffName, Key = key });
@@ -45,6 +46,7 @@ namespace Assistant
             buffsToMaintain.Add(new BuffToMaintain() { Node = config, SkillName = skillName, BuffName = buffName, Key = key, Condition = cond });
         }
         public static void MaintainBuff(ToggleNode config, string skillName, string buffName, VirtualKeyCode key) => MaintainBuff(config, skillName, buffName, key, () => true);
+        public static void ClearBuff(ToggleNode config, string buffName, VirtualKeyCode key, Func<bool> cond) => buffsToClear.Add(new BuffToMaintain() { Node = config, BuffName = buffName, Key = key, Condition = cond });
         private class BuffToMaintain
         {
             public ToggleNode Node;
@@ -100,6 +102,18 @@ namespace Assistant
                     continue;
                 }
                 SkillManager.TryUseSkill(buff.SkillName, buff.Key);
+            }
+            foreach(var buff in buffsToClear)
+            {
+                if (!(buff.Node?.Value ?? false)) continue;
+                try { if (!buff.Condition()) continue; }
+                catch (Exception err)
+                {
+                    Log($"Exception: {err.ToString()}");
+                    continue;
+                }
+                if (!HasBuff(buff.BuffName)) continue;
+                InputManager.PressKey(buff.Key, 40, 1000);
             }
         }
     }
