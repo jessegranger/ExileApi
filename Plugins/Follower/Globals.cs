@@ -96,7 +96,7 @@ namespace Assistant
 		public static bool IsValid(Entity ent) => (ent != null && ent.Path != null && ent.IsValid);
 		public static bool IsValid(ServerInventory.InventSlotItem item) => IsValid(item.Item);
         public static bool IsValid(LabelOnGround label) => label.Label != null && label.Label.Text != null && label.ItemOnGround != null;
-		public static bool IsValid(GameController game) => game != null && game.Game != null;
+		public static bool IsValid(GameController game) => game != null && game.Game != null && game.IngameState != null;
 		public static bool IsValid(ActorVaalSkill skill) => skill != null && skill.VaalSkillInternalName != null;
 
 		public static ItemRarity GetItemRarity(Entity ent)
@@ -152,16 +152,31 @@ namespace Assistant
 
 		public static bool IsFullLife(Entity ent)
         {
+			if (ent == null) return false;
 			var life = ent.GetComponent<Life>();
 			if (life == null) return false;
-			return life.CurHP == (life.MaxHP - life.ReservedFlatHP);
+			return life.CurHP == (life.MaxHP - life.TotalReservedHP);
         }
 		public static bool IsLowLife(Entity ent) {
-			var life = ent.GetComponent<Life>();
+            if (ent == null) return false;
+            var life = ent.GetComponent<Life>();
 			if (life == null) return false;
-			int maxHP = life.MaxHP - life.ReservedFlatHP;
+			int maxHP = life.MaxHP - life.TotalReservedHP;
 			return ((float)life.CurHP / maxHP) <= .50f;
 		}
+		public static bool IsMissingLife(Entity ent, int amount)
+        {
+			if (ent == null) return false;
+            var life = ent.GetComponent<Life>();
+			if (life == null) return false;
+			int maxHP = life.MaxHP - life.TotalReservedHP;
+			if (HasBuff("petrified_blood"))
+            {
+				maxHP = Math.Min(maxHP, life.MaxHP / 2);
+            }
+			int missing = maxHP - life.CurHP;
+			return missing >= amount;
+        }
 		public static bool IsLowES(Entity ent)
         {
             var life = ent.GetComponent<Life>();
@@ -172,14 +187,14 @@ namespace Assistant
         {
             var life = ent.GetComponent<Life>();
 			if (life == null) return false;
-			int maxMana = life.MaxMana - life.ReservedFlatMana;
+			int maxMana = life.MaxMana - life.TotalReservedMana;
 			return ((float)life.CurMana / maxMana) <= .50f;
         }
 		public static bool IsFullMana(Entity ent)
         {
             var life = ent.GetComponent<Life>();
 			if (life == null) return false;
-			int maxMana = life.MaxMana - life.ReservedFlatMana;
+			int maxMana = life.MaxMana - life.TotalReservedMana;
 			return life.CurMana == maxMana;
         }
 
@@ -191,10 +206,9 @@ namespace Assistant
                 DrawTextAtEnt(ent, "Life is null.");
                 return;
             }
-            DrawTextAtEnt(ent, $"HP: {life.CurHP} / {life.MaxHP} ({life.ReservedFlatHP} reserved {life.ReservedPercentHP}%)");
-            DrawTextAtEnt(ent, $"Mana: {life.CurMana} / {life.MaxMana} ({life.ReservedFlatMana} reserved {life.ReservedPercentMana}%)");
+            DrawTextAtEnt(ent, $"HP: {life.CurHP} / {life.MaxHP} ({life.TotalReservedHP} reserved {life.ReservedPercentHP}%)");
+            DrawTextAtEnt(ent, $"Mana: {life.CurMana} / {life.MaxMana} ({life.TotalReservedMana} reserved {life.ReservedPercentMana}%)");
             DrawTextAtEnt(ent, $"ES: {life.CurES} / {life.MaxES}");
-            // DrawTextAtEnt(ent, $"Fields: {life.Field0} {life.Field1} {life.Field2} {life.Field3}");
 
 		}
 
