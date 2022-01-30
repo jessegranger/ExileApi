@@ -119,7 +119,7 @@ namespace Assistant
             public bool IsInstantOnLowLife;
             public bool EnchantUseOnFull;
             public bool EnchantUseOnHitRare;
-            public bool IsFull => CurrentCharges >= MaxCharges;
+            public bool IsFull => CurrentCharges > 0 && CurrentCharges >= MaxCharges;
             public bool HasEnoughCharge => CurrentCharges >= ChargesPerUse;
             public bool IsUsable(int cooldown) => HasEnoughCharge && GlobalTimer.ElapsedMilliseconds > 200 && ((!Timer.IsRunning) || Timer.ElapsedMilliseconds > cooldown);
             public Flask()
@@ -198,13 +198,36 @@ namespace Assistant
                                 flask.ManaHealAmount = (int)((float)flask.ManaHealAmount * .70f);
                                 flask.Duration = (int)((float)flask.Duration * .70f);
                                 break;
-                            case "FlaskRemovesShock": if (linkToConditions) LinkConditionToFlask("shocked", flask); break;
+                            case "FlaskRemovesShock":
+                            case "FlaskShockImmunity":
+                                if (linkToConditions)
+                                {
+                                    LinkConditionToFlask("shocked", flask);
+                                }
+                                break;
                             case "FlaskCurseImmunity": if (linkToConditions) LinkConditionToFlask("cursed", flask); break;
                             case "FlaskChillFreezeImmunity":
-                            case "FlaskFreezeAndChillImmunityDuringEffect":
-                                if (linkToConditions) LinkConditionToFlask("frozen", flask); break;
-                            case "FlaskDispellsBurning": if (linkToConditions) LinkConditionToFlask("burning", flask); break;
-                            case "FlaskDispellsPoison": if (linkToConditions) LinkConditionToFlask("poisoned", flask); break;
+                            case "FlaskFreezeAndChillImmunityDuringEffect": if (linkToConditions)
+                                {
+                                    LinkConditionToFlask("frozen", flask);
+                                    LinkConditionToFlask("chilled", flask);
+                                }
+                                break;
+                            case "FlaskIgniteImmunity":
+                            case "FlaskDispellsBurning":
+                                if (linkToConditions)
+                                {
+                                    LinkConditionToFlask("burning", flask);
+                                    LinkConditionToFlask("ignited", flask);
+                                }
+                                break;
+                            case "FlaskDispellsPoison":
+                            case "FlaskPoisonImmunity":
+                                if (linkToConditions)
+                                {
+                                    LinkConditionToFlask("poisoned", flask);
+                                }
+                                break;
                         }
                     }
                 }
@@ -381,14 +404,24 @@ namespace Assistant
                                 flask.ManaHealAmount = (int)((float)flask.ManaHealAmount * .70f);
                                 flask.Duration = (int)((float)flask.Duration * .70f);
                                 break;
-                            case "FlaskRemovesShock": LinkConditionToFlask("shocked", flask); break;
+                            case "FlaskRemovesShock":
+                            case "FlaskShockImmunity":
+                                LinkConditionToFlask("shocked", flask); break;
                             case "FlaskCurseImmunity": LinkConditionToFlask("cursed", flask); break;
                             case "FlaskDispellsChill":
                             case "FlaskChillFreezeImmunity":
                             case "FlaskFreezeAndChillImmunityDuringEffect":
+                                LinkConditionToFlask("chilled", flask);
                                 LinkConditionToFlask("frozen", flask); break;
-                            case "FlaskDispellsBurning": LinkConditionToFlask("burning", flask); break;
-                            case "FlaskDispellsPoison": LinkConditionToFlask("poisoned", flask); break;
+                            case "FlaskIgniteImmunity":
+                            case "FlaskDispellsBurning":
+                                LinkConditionToFlask("burning", flask);
+                                LinkConditionToFlask("ignited", flask);
+                                break;
+                            case "FlaskDispellsPoison":
+                            case "FlaskPoisonImmunity":
+                                LinkConditionToFlask("poisoned", flask);
+                                break;
                         }
                     }
                     Log($"Flask: {pathName} Charges: [{charges.NumCharges}/{charges.ChargesMax}] Quality: {quality.ItemQuality}% HP:{flask.LifeHealAmount} MP:{flask.ManaHealAmount}");
@@ -462,7 +495,7 @@ namespace Assistant
         }
         private static bool CheckManaFlasks(Life life)
         {
-            var maxMana = life.MaxMana - life.ReservedFlatMana;
+            var maxMana = life.MaxMana - life.TotalReservedMana;
             var curMana = life.CurMana;
             var manaThreshold = maxMana * .4f;
             if (curMana < manaThreshold && ! HasAnyBuff("flask_effect_mana"))
