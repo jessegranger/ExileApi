@@ -11,6 +11,7 @@ namespace GameOffsets
         [FieldOffset(0x1B0)] public float ManaRegen;
         [FieldOffset(0x1B4)] public int MaxMana;
         [FieldOffset(0x1B8)] public int CurMana;
+        [FieldOffset(0x1BC)] public int ReservedFlatMana;
         [FieldOffset(0x1C0)] public int ReservedPercentMana;
 
         [FieldOffset(0x1EC)] public int MaxES;
