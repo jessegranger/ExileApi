@@ -55,6 +55,9 @@ namespace Assistant
         private static Stopwatch pressTimer = new Stopwatch();
         private static Dictionary<VirtualKeyCode, long> lastPressTime = new Dictionary<VirtualKeyCode, long>();
 
+        public static VirtualKeyCode KeyToVirtualKey(System.Windows.Forms.Keys Key) => (VirtualKeyCode)(Key & System.Windows.Forms.Keys.KeyCode);
+        public static System.Windows.Forms.Keys VirtualKeyToKey(VirtualKeyCode Key) => (System.Windows.Forms.Keys)Key;
+
         public static void OnRelease(VirtualKeyCode key, Action action) => Add(new KeyTracker(key, action));
         public static void PressKey(VirtualKeyCode Key, uint duration) => Add(new PressKey(Key, duration));
         public static void PressKey(VirtualKeyCode Key, uint duration, uint throttle_ms)
@@ -81,16 +84,18 @@ namespace Assistant
                 var chat = GameController.IngameState.IngameUi.ChatBoxRoot;
                 if (chat != null && chat.IsValid && chat.IsActive) return;
             }
+            // advance the state machine that figures out which action to take each frame
             Machine.OnTick();
         }
         [DllImport("user32.dll")] private static extern short VkKeyScanA(char ch);
+        public static VirtualKeyCode GetKeyCode(char c) => (VirtualKeyCode)VkKeyScanA(c);
 
         public static void ChatCommand(string v)
         {
             State start = new ActionState(() => { AllowInputInChatBox = true; });
             start
                 .Then(new PressKey(VirtualKeyCode.RETURN, 30))
-                .Then(v.Select((c) => new PressKey((VirtualKeyCode)VkKeyScanA(c), 10)).ToArray())
+                .Then(v.Select((c) => new PressKey(GetKeyCode(c), 10)).ToArray())
                 .Then(new PressKey(VirtualKeyCode.RETURN, 30))
                 .Then(() => { AllowInputInChatBox = false; })
                 ;
