@@ -213,6 +213,7 @@ namespace Assistant
                                     LinkConditionToFlask("chilled", flask);
                                 }
                                 break;
+                            case "FlaskIgniteImmunityDuringEffect":
                             case "FlaskIgniteImmunity":
                             case "FlaskDispellsBurning":
                                 if (linkToConditions)
@@ -413,6 +414,7 @@ namespace Assistant
                             case "FlaskFreezeAndChillImmunityDuringEffect":
                                 LinkConditionToFlask("chilled", flask);
                                 LinkConditionToFlask("frozen", flask); break;
+                            case "FlaskIgniteImmunityDuringEffect":
                             case "FlaskIgniteImmunity":
                             case "FlaskDispellsBurning":
                                 LinkConditionToFlask("burning", flask);
