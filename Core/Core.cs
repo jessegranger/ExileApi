@@ -39,8 +39,8 @@ namespace ExileCore
         private readonly RenderForm _form;
         private readonly DebugInformation _fpsCounterDebugInformation;
         private readonly DebugInformation _gcTickDebugInformation;
-        private readonly WaitTime _mainControl = new WaitTime(2000);
-        private readonly WaitTime _mainControl2 = new WaitTime(250);
+        private readonly WaitTime _wait2sec = new WaitTime(2000);
+        private readonly WaitTime _wait250ms = new WaitTime(250);
         private readonly MenuWindow _mainMenu;
         private readonly DebugInformation _menuDebugInformation;
         private readonly DebugInformation _parallelCoroutineTickDebugInformation;
@@ -52,7 +52,6 @@ namespace ExileCore
         private double _elTime = 1000 / 20f;
         private double _endParallelCoroutineTimer;
         private Memory _memory;
-        private bool _memoryValid = true;
         private float _minimalFpsTime;
         private double _startParallelCoroutineTimer;
         private double _targetParallelFpsTime;
@@ -111,8 +110,11 @@ namespace ExileCore
                                 Thread.Sleep(10 * 1000);
                                 continue;
                             }
-                            DebugWindow.LogDebug("Core -> Checking for update...");
-                            versionChecker.CheckVersionAndPrepareUpdate(_coreSettings.AutoPrepareUpdate);
+                            if (_coreSettings.AutoPrepareUpdate)
+                            {
+                                DebugWindow.LogDebug("Core -> Checking for update..."); 
+                                versionChecker.CheckVersionAndPrepareUpdate(_coreSettings.AutoPrepareUpdate);
+                            }
                             Thread.Sleep(100 * 1000);
                         }
                     });
@@ -224,7 +226,7 @@ namespace ExileCore
         public Runner CoroutineRunnerParallel { get; set; }
         public GameController GameController { get; private set; }
         public Graphics Graphics { get; }
-        public bool IsForeground => WinApi.IsForegroundWindow(_memory.Process.MainWindowHandle)
+        public bool IsForeground => ((_memory?.Process != null) && WinApi.IsForegroundWindow(_memory.Process.MainWindowHandle))
             || WinApi.IsForegroundWindow(FormHandle)
             || _coreSettings.ForceForeground;
 
@@ -238,21 +240,27 @@ namespace ExileCore
             pluginManager?.CloseAllPlugins();
         }
 
+        private bool IsValid(Memory mem) => mem != null && !mem.IsInvalid();
+        private bool IsValid(GameController gc) => gc != null;
+
         private IEnumerator MainControl()
         {
             while (true)
             {
-                if (_memory == null)
+                if (!IsValid(_memory))
                 {
                     _memory = FindPoe();
-                    if (_memory == null) yield return _mainControl;
-                    continue;
+                    if (IsValid(_memory))
+                    {
+                        Inject();
+                    }
                 }
 
-                if (GameController == null && _memory != null)
+
+                if (!(IsValid(GameController) && IsValid(_memory)))
                 {
-                    Inject();
-                    if (GameController == null) yield return _mainControl;
+                    DebugWindow.LogDebug("Core -> Inject failed");
+                    yield return _wait2sec;
                     continue;
                 }
 
@@ -267,9 +275,7 @@ namespace ExileCore
                     _form.Invoke(new Action(() => { _form.Bounds = clientRectangle; }));
                 }
 
-                _memoryValid = !_memory.IsInvalid();
-
-                if (!_memoryValid)
+                if( !IsValid(_memory) )
                 {
                     GameController.Dispose();
                     GameController = null;
@@ -280,18 +286,24 @@ namespace ExileCore
                     GameController.IsForeGroundCache = IsForeground;
                 }
 
-                yield return _mainControl2;
+                yield return _wait250ms;
             }
         }
 
         public static Memory FindPoe()
         {
+            DebugWindow.LogDebug("Core -> FindPoe()");
             var pid = FindPoeProcess();
 
             if (!pid.HasValue || pid.Value.process.Id == 0)
+            {
                 DebugWindow.LogMsg("Game not found");
+            }
             else
+            {
+                DebugWindow.LogDebug($"Game found: {pid.Value.process}");
                 return new Memory(pid.Value);
+            }
 
             return null;
         }
@@ -300,21 +312,25 @@ namespace ExileCore
         {
             try
             {
-                if (_memory != null)
+                DebugWindow.LogDebug("Inject -> Starting");
+                if( _memory == null || _memory.IsInvalid() )
                 {
-                    GameController = new GameController(_memory, _soundController, _settings, MultiThreadManager);
-                    lastClientBound = _form.Bounds;
-
-                    using (new PerformanceTimer("Plugin loader"))
-                    {
-                        pluginManager = new PluginManager(
-                            GameController, 
-                            Graphics, 
-                            MultiThreadManager,
-                            _settings
-                        );
-                    }
+                    DebugWindow.LogError("Inject -> Invalid memory");
+                    return;
                 }
+                GameController = new GameController(_memory, _soundController, _settings, MultiThreadManager);
+                lastClientBound = _form.Bounds;
+
+                using (new PerformanceTimer("Plugin loader"))
+                    {
+                    pluginManager = new PluginManager(
+                        GameController,
+                        Graphics,
+                        MultiThreadManager,
+                        _settings
+                    );
+                }
+                DebugWindow.LogDebug("Inject -> Complete");
             }
             catch (Exception e)
             {
@@ -345,7 +361,8 @@ namespace ExileCore
 
                 try
                 {
-                    _mainMenu.Render(GameController, pluginManager?.Plugins);
+                    var _plugins = pluginManager?.Plugins;
+                    _mainMenu.Render(GameController, _plugins);
                 }
                 catch (Exception e)
                 {
@@ -460,7 +477,10 @@ namespace ExileCore
             var ixChosen = clients.Count > 1 ? ChooseSingleProcess(clients) : 0;
 
             if (clients.Count > 0)
-                return clients[ixChosen];
+            {
+                var client = clients[ixChosen];
+                return client.x.MainWindowTitle.Equals("Done") ? null : client;
+            }
 
             return null;
         }
