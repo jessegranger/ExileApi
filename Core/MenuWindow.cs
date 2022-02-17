@@ -196,7 +196,7 @@ namespace ExileCore
 
         public unsafe void Render(GameController _gameController, List<PluginWrapper> plugins)
         {
-            plugins = plugins?.OrderBy(x => x.Name).ToList();
+            plugins = plugins?.OrderBy(x => x.Name).ToList() ?? new List<PluginWrapper>();
 
             if (CoreSettings.ShowDebugWindow)
             {
@@ -235,7 +235,7 @@ namespace ExileCore
             ImGui.PushFont(Core.Graphics.Font.Atlas);
             ImGui.SetNextWindowSize(new Vector2(800, 600), ImGuiCond.FirstUseEver);
             var pOpen = CoreSettings.Enable.Value;
-            ImGui.Begin($"HUD S3ttings {VersionChecker.LocalVersion?.VersionString}", ref pOpen);
+            ImGui.Begin($"HUD Settings {VersionChecker.LocalVersion?.VersionString}", ref pOpen);
             CoreSettings.Enable.Value = pOpen;
 
             ImGui.BeginChild("Left menu window", new Vector2(PluginNameWidth, ImGui.GetContentRegionAvail().Y), true,
