@@ -64,4 +64,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GameOffsets\GameOffsets.csproj" />
   </ItemGroup>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="taskkill /IM Loader.exe 2&gt;nul&#xD;&#xA;exit 0" />
+  </Target>
 </Project>

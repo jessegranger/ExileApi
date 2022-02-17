@@ -54,4 +54,7 @@
       <DependentUpon>AppForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="taskkill /IM Loader.exe 1&gt;nul 2&gt;nul&#xD;&#xA;exit 0" />
+  </Target>
 </Project>
