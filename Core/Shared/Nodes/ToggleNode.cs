@@ -47,7 +47,7 @@ namespace ExileCore.Shared.Nodes
 
         public static implicit operator bool(ToggleNode node)
         {
-            return node.Value;
+            return node?.Value ?? false;
         }
     }
 }
