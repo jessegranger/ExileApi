@@ -292,16 +292,15 @@ namespace ExileCore
 
         public static Memory FindPoe()
         {
-            DebugWindow.LogDebug("Core -> FindPoe()");
             var pid = FindPoeProcess();
 
             if (!pid.HasValue || pid.Value.process.Id == 0)
             {
-                DebugWindow.LogMsg("Game not found");
+                DebugWindow.LogMsg("Game process not found");
             }
             else
             {
-                DebugWindow.LogDebug($"Game found: {pid.Value.process}");
+                DebugWindow.LogDebug($"Game process found: {pid.Value.process}");
                 return new Memory(pid.Value);
             }
 
@@ -312,8 +311,7 @@ namespace ExileCore
         {
             try
             {
-                DebugWindow.LogDebug("Inject -> Starting");
-                if( _memory == null || _memory.IsInvalid() )
+                if( ! IsValid(_memory) )
                 {
                     DebugWindow.LogError("Inject -> Invalid memory");
                     return;
@@ -330,7 +328,6 @@ namespace ExileCore
                         _settings
                     );
                 }
-                DebugWindow.LogDebug("Inject -> Complete");
             }
             catch (Exception e)
             {
@@ -361,8 +358,7 @@ namespace ExileCore
 
                 try
                 {
-                    var _plugins = pluginManager?.Plugins;
-                    _mainMenu.Render(GameController, _plugins);
+                    _mainMenu.Render(GameController, pluginManager?.Plugins);
                 }
                 catch (Exception e)
                 {
@@ -479,6 +475,7 @@ namespace ExileCore
             if (clients.Count > 0)
             {
                 var client = clients[ixChosen];
+                // don't accidentally try to select the game Launcher (even though it has name PathOfExile.exe the window title is wrong)
                 return client.x.MainWindowTitle.Equals("Done") ? null : client;
             }
 
