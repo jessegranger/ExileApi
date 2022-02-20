@@ -25,4 +25,5 @@ namespace ExileCore.PoEMemory.MemoryObjects
         public AreaTemplate CurrentArea => _CurrentArea.Value;
         public WorldArea CurrentWorldArea => _CurrentWorldArea.Value;
     }
-}
+
+};

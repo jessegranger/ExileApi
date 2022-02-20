@@ -42,12 +42,12 @@ namespace GameOffsets
     {
         public const int Skip = 0x8000;
         
-        [FieldOffset(0x8820 - Skip)] public long PlayerRelatedData;
-        [FieldOffset(0x8838 - Skip)] public byte NetworkState;
-        [FieldOffset(0x8850 - Skip)] public NativeStringU League;
-        [FieldOffset(0x88D0 - Skip)] public int TimeInGame;
-        [FieldOffset(0x88E8 - Skip)] public int Latency;
-        [FieldOffset(0x88F0 - Skip)] public NativePtrArray PlayerStashTabs;
+        [FieldOffset(0x89A0 - Skip)] public long PlayerRelatedData;
+        [FieldOffset(0x89B8 - Skip)] public byte NetworkState;
+        [FieldOffset(0x89E0 - Skip)] public NativeStringU League;
+        [FieldOffset(0x8A50 - Skip)] public int TimeInGame;
+        [FieldOffset(0x8A68 - Skip)] public int Latency;
+        [FieldOffset(0x88F0 - Skip + 0x180)] public NativePtrArray PlayerStashTabs;
         [FieldOffset(0x8908 - Skip)] public NativePtrArray GuildStashTabs;
         [FieldOffset(0x8550 - Skip)] public long FriendsList;
         //[FieldOffset(0x8430 - Skip)] public long FriendNoteList;
@@ -60,15 +60,15 @@ namespace GameOffsets
         //[FieldOffset(0x8538 - Skip)] public long GuildList;
         ////[FieldOffset(0x8098 - Skip)] public NativePtrArray GuildArray;
         [FieldOffset(0x8B48 - Skip)] public long GuildNameAddress;
-        [FieldOffset(0x8B50 - Skip)] public SkillBarIdsStruct SkillBarIds;
+        [FieldOffset(0x8CD8 - Skip)] public SkillBarIdsStruct SkillBarIds; //3.17.1
         [FieldOffset(0x8BB0 - Skip)] public NativePtrArray NearestPlayers;
         ////[FieldOffset(0x8AA0 - Skip)] public NativePtrArray MinimapIcons;
         ////[FieldOffset(0x8AC0 - Skip)] public NativePtrArray LocalPlayer;
         [FieldOffset(0x8EB0 - Skip)] public NativePtrArray PlayerInventories; // 3.17.1
         [FieldOffset(0x8E78 - Skip)] public NativePtrArray NPCInventories;
         [FieldOffset(0x8FC8 - Skip)] public NativePtrArray GuildInventories;
-        [FieldOffset(0x9138 - Skip)] public ushort TradeChatChannel;
-        [FieldOffset(0x9140 - Skip)] public ushort GlobalChatChannel;
+        [FieldOffset(0x92C0 - Skip)] public ushort TradeChatChannel;
+        [FieldOffset(0x92C8 - Skip)] public ushort GlobalChatChannel;
         [FieldOffset(0x91E0 - Skip)] public ushort LastActionId;
 
         //[FieldOffset(0x90C0 - Skip)] public long InstanceLeagueInfo;
@@ -102,6 +102,6 @@ namespace GameOffsets
         [FieldOffset(0x9D28 - Skip)] public ushort CurrentSulphiteAmount;
 
         //[FieldOffset(0x9590 - Skip)] public long DeliriumRewardInfo;
-        //[FieldOffset(0x95A8 - Skip)] public long BlueprintRevealInfo;
+        //[FieldOffset(0x95A8 - Skip)] public long BlueprintRevealInfo; 
     }
 }
