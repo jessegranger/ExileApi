@@ -96,23 +96,23 @@ namespace Assistant
 			{
 				if (items == null)
 				{
-					Log("Add(Enumerable null) ignored.");
-					return;
-				}
+                    Log("Add(Enumerable null) ignored.");
+                    return;
+                }
 				foreach (var item in items) Add(item);
 			}
 			public void Add(NormalInventoryItem item)
 			{
 				if (!IsValid(item))
 				{
-					Log("Add(invalid item) ignored.");
-					return;
+                    Log("Add(invalid item) ignored.");
+                    return;
 				}
 				var path = item.Item.Path.Split('/');
 				var last = path[path.Length - 1];
 				var mods = item.Item.GetComponent<Mods>();
 				if (mods == null) {
-					// Log(string.Format("Add({0}) ignored (no mods).", last));
+					Log(string.Format("Add({0}) ignored (no mods).", last));
 					return;
 				}
 				if (mods.Identified) {
@@ -124,12 +124,18 @@ namespace Assistant
 					// Log(string.Format("Add({0}) ignored ({1}).", last, mods.ItemRarity));
 					return;
 				}
-				if (mods.ItemLevel < 60) { return; }
-				if( mods.ItemLevel > 74) { return; }
-				switch (path[2])
+				if (mods.ItemLevel < 60) {
+					Log($"Add({last}) ignored ({mods.ItemLevel} < 60)");
+					return;
+				}
+				if (mods.ItemLevel > 74) {
+					Log($"Add({last}) ignored ({mods.ItemLevel} > 74)");
+					return;
+				}
+                // Log(string.Format("Add({0}) finding {1}/{2} slot in the recipe:", last, path[2], path[3]));
+                switch (path[2])
 				{
 					case "Weapons":
-						// Log(string.Format("Add({0}) finding {1}/{2} slot in the recipe:", last, path[2], path[3]));
 						switch (path[3])
 						{
 							case "OneHandWeapons":
@@ -168,6 +174,7 @@ namespace Assistant
 						break;
 					case "Amulets": amulet = IsValid(amulet) ? amulet : item; break;
 					case "Belts": belt = IsValid(belt) ? belt : item; break;
+					default: Log("No suitable slot"); break;
 				}
 			}
 			private static bool IsOneHanded(NormalInventoryItem item) => IsValid(item) && item.Item.Path.Contains("Weapons/OneHandWeapons/");
