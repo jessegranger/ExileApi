@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using WindowsInput;
 using WindowsInput.Native;
 using static Assistant.Globals;
@@ -28,23 +29,27 @@ namespace Assistant
         private class KeyTracker : State
         {
             private static readonly InputSimulator input = new InputSimulator();
-            public readonly VirtualKeyCode Key;
+            public readonly VirtualKeyCode vKey;
+            public readonly Keys Key;
             public readonly Action Action;
             private bool downBefore = false;
             public KeyTracker(VirtualKeyCode key, Action action, State next = null) : base(next)
             {
-                Key = key;
+                vKey = key;
+                Key = VirtualKeyToKey(key);
                 Action = action;
+                Input.RegisterKey(Key);
             }
             public override State OnTick()
             {
-                bool downNow = input.InputDeviceState.IsHardwareKeyDown(Key);
+                bool downNow = input.InputDeviceState.IsHardwareKeyDown(vKey) || Input.IsKeyDown(Key);
                 // DrawTextAtPlayer($"KeyTracker({Key}): Tick({downNow})");
                 if( downBefore && !downNow) Action();
                 downBefore = downNow;
                 return this;
             }
-            public override string ToString() => $"TK-{Key}";
+            public override string ToString() => $"TK-{vKey}";
+            [DllImport("user32.dll")] private static extern short GetAsyncKeyState(Keys vKey);
         }
 
         static InputManager()
