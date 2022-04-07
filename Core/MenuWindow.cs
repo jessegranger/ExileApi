@@ -254,6 +254,12 @@ namespace ExileCore
                 Selected = CoreSettingsAction;
             }
 
+            if( _gameController.IngameState.Address == 0 ) ImGui.TextColored(Color.Red.ToImguiVec4(), "IngameState.Address == 0");
+            if (_gameController.IngameState.Data.Address == 0)
+            {
+                ImGui.TextColored(Color.Red.ToImguiVec4(), "IngameState.Data.Address == 0");
+            }
+
             var (versionText, versionColor) = VersionStatus();
             if (versionText != null)
             {

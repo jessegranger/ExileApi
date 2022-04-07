@@ -89,6 +89,11 @@ namespace ExileCore
                 EntityCache.Clear();
 
                 var dataLocalPlayer = _gameController.Game.IngameState.Data.LocalPlayer;
+                if (dataLocalPlayer == null || dataLocalPlayer.Path == null)
+                {
+                    DebugWindow.LogError($"EntityListWrapper.AreaChanged -> Data.LocalPlayer is null");
+                    return;
+                }
 
                 if (Player != null && Player.Address == dataLocalPlayer.Address) return;
                 if (!dataLocalPlayer.Path.StartsWith("Meta")) return;
