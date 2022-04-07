@@ -249,17 +249,19 @@ namespace ExileCore
             {
                 if (!IsValid(_memory))
                 {
+                    DebugWindow.LogDebug("Core -> Inject starting");
                     _memory = FindPoe();
-                    if (IsValid(_memory))
-                    {
-                        Inject();
-                    }
+                    Inject();
                 }
-
-
-                if (!(IsValid(GameController) && IsValid(_memory)))
+                if (!IsValid(_memory))
                 {
-                    DebugWindow.LogDebug("Core -> Inject failed");
+                    DebugWindow.LogDebug("Core -> Inject failed to find PoE memory");
+                    yield return _wait2sec;
+                    continue;
+                }
+                if (!IsValid(GameController))
+                {
+                    DebugWindow.LogDebug("Core -> Inject failed to create a valid GameController");
                     yield return _wait2sec;
                     continue;
                 }
@@ -307,6 +309,13 @@ namespace ExileCore
             return null;
         }
 
+        public void Reinject()
+        {
+            pluginManager?.CloseAllPlugins();
+            GameController?.Dispose();
+            Inject();
+        }
+
         private void Inject()
         {
             try
@@ -320,7 +329,7 @@ namespace ExileCore
                 lastClientBound = _form.Bounds;
 
                 using (new PerformanceTimer("Plugin loader"))
-                    {
+                {
                     pluginManager = new PluginManager(
                         GameController,
                         Graphics,
