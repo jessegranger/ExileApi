@@ -33,7 +33,20 @@ namespace ExileCore.PoEMemory.MemoryObjects
 
         public IngameUElementsOffsets IngameUIElementsStruct => _cachedValue.Value;
         public GameUi GameUI => GetObject<GameUi>(IngameUIElementsStruct.GameUI);
-        public SellWindow SellWindow => GetObject<SellWindow>(IngameUIElementsStruct.SellWindow);
+        public SellWindow SellWindow
+        {
+            get
+            {
+                var sellWindow = this.GetObject<SellWindow>(this.IngameUIElementsStruct.SellWindow);
+
+                if (sellWindow != null && sellWindow.IsVisibleLocal)
+                {
+                    return sellWindow;
+                }
+                return this.GetObject<SellWindow>(this.IngameUIElementsStruct.ExpeditionSellWindow);
+            }
+        }
+        
         public TradeWindow TradeWindow => GetObject<TradeWindow>(IngameUIElementsStruct.TradeWindow);
         public NpcDialog NpcDialog => GetObject<NpcDialog>(IngameUIElementsStruct.NpcDialog);
         public BanditDialog BanditDialog => GetObject<BanditDialog>(IngameUIElementsStruct.BanditDialog);
@@ -73,7 +86,7 @@ namespace ExileCore.PoEMemory.MemoryObjects
         public Cursor Cursor => _cursor ??= GetObject<Cursor>(IngameUIElementsStruct.Mouse);
         public Element BetrayalWindow => _BetrayalWindow ??= GetObject<Element>(IngameUIElementsStruct.BetrayalWindow);
         public Element SyndicatePanel => BetrayalWindow; // Required for TehCheats Api, BroodyHen uses this.
-        public Element SyndicateTree => GetObject<Element>(M.Read<long>(BetrayalWindow.Address + 0xA50));
+        public Element SyndicateTree => BetrayalWindow[0];
         public Element UnveilWindow => _UnveilWindow ??= GetObject<Element>(IngameUIElementsStruct.UnveilWindow);
         public Element ZanaMissionChoice => _ZanaMissionChoice ??= GetObject<Element>(IngameUIElementsStruct.ZanaMissionChoice);
         public IncursionWindow IncursionWindow => _IncursionWindow ??= GetObject<IncursionWindow>(IngameUIElementsStruct.IncursionWindow);
@@ -93,7 +106,13 @@ namespace ExileCore.PoEMemory.MemoryObjects
         public Element RitualFavourWindow => GetObject<Element>(IngameUIElementsStruct.RitualFavourPanel);
         public Element UltimatumProgressWindow => GetObject<Element>(IngameUIElementsStruct.UltimatumProgressPanel);
         public DelveDarknessElement DelveDarkness => GetObject<DelveDarknessElement>(IngameUIElementsStruct.DelveDarkness);
-        public HarvestWindow HarvestWindow => GetObject<HarvestWindow>(IngameUIElementsStruct.HarvestWindow);
+        public HarvestWindow HarvestWindow => this.HorticraftingSacredGrovePanel.IsVisible 
+            ? this.HorticraftingSacredGrovePanel
+            : this.HorticraftingHideoutPanel;
+        public HarvestWindow HorticraftingHideoutPanel => this.GetObject<HarvestWindow>(this.IngameUIElementsStruct.HorticraftingHideoutPanel);
+        public HarvestWindow HorticraftingSacredGrovePanel => this.GetObject<HarvestWindow>(this.IngameUIElementsStruct.HorticraftingSacredGrovePanel);
+
+        
 
         public DivineFont LabyrinthDivineFontPanel =>
             GetObject<DivineFont>(IngameUIElementsStruct.LabyrinthDivineFontPanel);
