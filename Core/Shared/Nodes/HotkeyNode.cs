@@ -7,7 +7,11 @@ namespace ExileCore.Shared.Nodes
 {
     public class ToggleHotkeyNode : HotkeyNode
     {
-        public bool Enabled { get; set; } = false;
+        public bool Enabled {
+            get { return enabled; }
+            set { if ( value != enabled ) { enabled = value; OnValueChanged(); } }
+        }
+        private bool enabled = false;
         public ToggleHotkeyNode(Keys key) : base(key) { }
         public static implicit operator Keys(ToggleHotkeyNode node) => node.Value;
         public static implicit operator ToggleHotkeyNode(Keys value) => new ToggleHotkeyNode(value);
