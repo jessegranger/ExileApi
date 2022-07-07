@@ -17,7 +17,6 @@ namespace Assistant {
 			return pathName.StartsWith("Flask");
 		}
 
-		public static Flask ParseFlask(Entity ent) => Flask.ParseEnt(ent);
 
 		private static Dictionary<string, int> baseHealAmount = new Dictionary<string, int>()
 		{
@@ -100,9 +99,8 @@ namespace Assistant {
         };
 
 		public class Flask {
-			public static Stopwatch GlobalTimer = new Stopwatch();
-			static Flask() => GlobalTimer.Start();
-			public Stopwatch Timer = new Stopwatch();
+			public static Stopwatch GlobalTimer = Stopwatch.StartNew();
+			public Stopwatch UseTimer = new Stopwatch();
 			public VirtualKeyCode Key;
 			public string PathName;
 			public int CurrentCharges;
@@ -117,13 +115,13 @@ namespace Assistant {
 			public bool EnchantUseOnHitRare;
 			public bool IsFull => CurrentCharges > 0 && CurrentCharges >= MaxCharges;
 			public bool HasEnoughCharge => CurrentCharges >= ChargesPerUse;
-			public bool IsUsable(int cooldown) => HasEnoughCharge && GlobalTimer.ElapsedMilliseconds > 200 && ((!Timer.IsRunning) || Timer.ElapsedMilliseconds > cooldown);
+			public bool IsUsable(int cooldown) => HasEnoughCharge && GlobalTimer.ElapsedMilliseconds > 200 && ((!UseTimer.IsRunning) || UseTimer.ElapsedMilliseconds > cooldown);
 			public Flask() {
 			}
 			public bool UseFlask(int cooldown) {
 				if ( IsUsable(cooldown) ) {
 					GlobalTimer.Restart();
-					Timer.Restart();
+					UseTimer.Restart();
 					InputManager.PressKey(Key, 30);
 					return true;
 				}
@@ -132,100 +130,9 @@ namespace Assistant {
 
 			public override string ToString() => $"{PathName} [{CurrentCharges}/{MaxCharges}] hp:{LifeHealAmount} mp:{ManaHealAmount} {Duration} ms";
 
-			public static Flask ParseEnt(Entity ent, bool linkToConditions = false) {
-				Flask flask = new Flask();
-				string pathName = ent.Path.Substring(ent.Path.LastIndexOf("/") + 1);
-				flask.PathName = pathName;
-				Quality quality = ent.GetComponent<Quality>();
-				Charges charges = ent.GetComponent<Charges>();
-				if ( charges != null ) {
-					flask.ChargesPerUse = charges.ChargesPerUse;
-					flask.CurrentCharges = charges.NumCharges;
-					flask.MaxCharges = charges.ChargesMax;
-				}
-				baseHealAmount.TryGetValue(pathName, out flask.LifeHealAmount);
-				baseManaAmount.TryGetValue(pathName, out flask.ManaHealAmount);
-				baseDuration.TryGetValue(pathName, out flask.Duration);
-				Mods flaskMods = ent.GetComponent<Mods>();
-				if ( flaskMods.ItemMods != null ) {
-					foreach ( var mod in flaskMods.ItemMods ) {
-						switch ( mod.Name ) {
-							case "FlaskIncreasedDuration":
-								flask.Duration = (int)((float)flask.Duration * ((100 + mod.Value1) / 100f));
-								break;
-							case "FlaskEnchantmentInjectorOnFullCharges":
-								flask.EnchantUseOnFull = true;
-								break;
-							case "FlaskEnchantmentInjectorOnHittingRareOrUnique":
-								flask.EnchantUseOnHitRare = true;
-								break;
-							case "FlaskExtraCharges":
-								flask.MaxCharges += mod.Value1;
-								break;
-							case "FlaskInstantRecoveryOnLowLife":
-								flask.IsInstantOnLowLife = true;
-								flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .75f);
-								break;
-							case "FlaskFullInstantRecovery":
-								flask.IsInstant = true;
-								flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .34f);
-								flask.Duration = 0;
-								break;
-							case "FlaskPartialInstantRecovery":
-								flask.IsInstant = true;
-								flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .25f);
-								break;
-							case "FlaskBleedCorruptingBloodImmunity":
-								if ( linkToConditions ) {
-									LinkConditionToFlask("bleeding", flask);
-									LinkConditionToFlask("corrupted_blood", flask);
-								}
-								break;
-							case "FlaskEffectNotRemovedOnFullMana":
-								flask.ManaHealAmount = (int)((float)flask.ManaHealAmount * .70f);
-								flask.Duration = (int)((float)flask.Duration * .70f);
-								break;
-							case "FlaskRemovesShock":
-							case "FlaskShockImmunity":
-								if ( linkToConditions ) {
-									LinkConditionToFlask("shocked", flask);
-								}
-								break;
-							case "FlaskCurseImmunity": if ( linkToConditions ) LinkConditionToFlask("cursed", flask); break;
-							case "FlaskChillFreezeImmunity":
-							case "FlaskFreezeAndChillImmunityDuringEffect":
-								if ( linkToConditions ) {
-									LinkConditionToFlask("frozen", flask);
-									LinkConditionToFlask("chilled", flask);
-								}
-								break;
-							case "FlaskIgniteImmunityDuringEffect":
-							case "FlaskIgniteImmunity":
-							case "FlaskDispellsBurning":
-								if ( linkToConditions ) {
-									LinkConditionToFlask("burning", flask);
-									LinkConditionToFlask("ignited", flask);
-								}
-								break;
-							case "FlaskDispellsPoison":
-							case "FlaskPoisonImmunity":
-								if ( linkToConditions ) {
-									LinkConditionToFlask("poisoned", flask);
-								}
-								break;
-						}
-					}
-				}
-				if ( quality != null ) {
-					flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * ((100 + quality.ItemQuality) / 100f));
-					flask.ManaHealAmount = (int)((float)flask.ManaHealAmount * ((100 + quality.ItemQuality) / 100f));
-					flask.Duration = (int)((float)flask.Duration * ((100 + quality.ItemQuality) / 100f));
-				}
-				return flask;
-			}
 
 		}
-		private static Flask[] flasks = new Flask[]
+		private static readonly Flask[] flasks = new Flask[]
 		{
 						new Flask() { Key = VirtualKeyCode.VK_1 },
 						new Flask() { Key = VirtualKeyCode.VK_2 },
@@ -233,18 +140,17 @@ namespace Assistant {
 						new Flask() { Key = VirtualKeyCode.VK_4 },
 						new Flask() { Key = VirtualKeyCode.VK_5 },
 		};
+		public static Flask GetFlask(int i) {
+			return flasks[i];
+		}
 
-		private static GameController api;
-		private static AssistantSettings Settings;
 		private static bool Paused = true;
 
-		public static void Initialise(GameController gameController, AssistantSettings settings) {
-			api = gameController;
-			Settings = settings;
+		public static void Initialise() {
 			// F3 starts it and refreshes flask mods at the same time
 			InputManager.OnRelease(VirtualKeyCode.PAUSE, () => updateFlaskMods = !(Paused = !Paused));
 			InputManager.OnRelease(VirtualKeyCode.HOME, () => updateFlaskMods = true);
-			PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.307f, .985f), 0);
+			PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.305f, .983f), 0);
 		}
 
 		private static string GetStatusText() => $"[{(Paused ? "=" : ">")}]";
@@ -257,24 +163,115 @@ namespace Assistant {
 		}
 		private static bool updateFlaskMods = true;
 		public static void RefreshFlaskMods() => updateFlaskMods = true;
+		private static void UpdateFlaskEnt(Entity flaskEnt, int posX) {
+			if ( !IsValid(flaskEnt) ) return;
+			Charges charges = flaskEnt.GetComponent<Charges>();
+			if ( charges == null ) return;
+			Flask flask = flasks[posX];
+			flask.CurrentCharges = charges.NumCharges;
+			flask.ChargesPerUse = charges.ChargesPerUse;
+			flask.MaxCharges = charges.ChargesMax;
+			if ( updateFlaskMods ) {
+				int amount = 0;
+				string pathName = flaskEnt.Path.Substring(flaskEnt.Path.LastIndexOf("/") + 1);
+				flask.PathName = pathName;
+				var quality = flaskEnt.GetComponent<Quality>();
+				if ( baseDuration.TryGetValue(pathName, out flask.Duration) ) {
+					if ( quality != null ) {
+						flask.Duration = (int)((float)flask.Duration * ((100 + quality.ItemQuality) / 100f));
+					}
+				} else flask.Duration = 3000;
+				// if this is a known Life flask
+				if ( baseHealAmount.TryGetValue(pathName, out flask.LifeHealAmount) ) {
+					if ( quality != null ) {
+						flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * ((100 + quality.ItemQuality) / 100f));
+					}
+				} else flask.LifeHealAmount = 0;
+
+				// handle Mana flasks
+				if ( baseManaAmount.TryGetValue(pathName, out amount) ) {
+					flask.ManaHealAmount = amount;
+					if ( quality != null ) {
+						flask.ManaHealAmount = (int)((float)amount * ((100 + quality.ItemQuality) / 100f));
+					}
+				} else flask.ManaHealAmount = 0;
+
+				Mods flaskMods = flaskEnt.GetComponent<Mods>();
+				foreach ( var mod in flaskMods.ItemMods ) {
+					Log($"Flask Mod: {mod.Name} {mod.Value1}");
+					switch ( mod.Name ) {
+						case "FlaskIncreasedDuration":
+							flask.Duration = (int)((float)flask.Duration * ((100 + mod.Value1) / 100f));
+							break;
+						case "FlaskEnchantmentInjectorOnFullCharges":
+							flask.EnchantUseOnFull = true;
+							break;
+						case "FlaskEnchantmentInjectorOnHittingRareOrUnique":
+							flask.EnchantUseOnHitRare = true;
+							break;
+						case "FlaskExtraCharges":
+							flask.MaxCharges += mod.Value1;
+							break;
+						case "FlaskInstantRecoveryOnLowLife":
+							flask.IsInstantOnLowLife = true;
+							flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .75f);
+							break;
+						case "FlaskFullInstantRecovery":
+							flask.IsInstant = true;
+							flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .34f);
+							break;
+						case "FlaskPartialInstantRecovery":
+							flask.IsInstant = true;
+							flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .25f);
+							break;
+						case "FlaskRemovesBleeding":
+						case "FlaskBleedCorruptingBloodImmunity":
+							LinkConditionToFlask("bleeding", flask);
+							LinkConditionToFlask("corrupted_blood", flask);
+							LinkConditionToFlask("corrupting_blood", flask);
+							break;
+						case "FlaskEffectNotRemovedOnFullMana":
+							flask.ManaHealAmount = (int)((float)flask.ManaHealAmount * .70f);
+							flask.Duration = (int)((float)flask.Duration * .70f);
+							break;
+						case "FlaskRemovesShock":
+						case "FlaskShockImmunity":
+							LinkConditionToFlask("shocked", flask); break;
+						case "FlaskCurseImmunity":
+							LinkConditionToFlask("cursed", flask); break;
+						case "FlaskDispellsChill":
+						case "FlaskChillFreezeImmunity":
+						case "FlaskFreezeAndChillImmunityDuringEffect":
+							LinkConditionToFlask("chilled", flask);
+							LinkConditionToFlask("frozen", flask); break;
+						case "FlaskIgniteImmunityDuringEffect":
+						case "FlaskIgniteImmunity":
+						case "FlaskDispellsBurning":
+							LinkConditionToFlask("burning", flask);
+							LinkConditionToFlask("ignited", flask);
+							break;
+						case "FlaskDispellsPoison":
+						case "FlaskPoisonImmunity":
+							LinkConditionToFlask("poisoned", flask);
+							break;
+					}
+				}
+				Log($"Flask: {pathName} Charges: [{charges.NumCharges}/{charges.ChargesMax}] Quality: {quality.ItemQuality}% HP:{flask.LifeHealAmount} MP:{flask.ManaHealAmount}");
+			}
+		}
 		private static void UpdateFlasks() {
-			if ( !IsValid(api) ) {
+			var game = GetGame();
+			if ( !IsValid(game) ) {
+				Log("Failed to update flasks: invalid Game object.");
 				return;
 			}
-			var playerInventories = api.Game.IngameState.ServerData.PlayerInventories;
+			var playerInventories = game.Game.IngameState.Data.ServerData.PlayerInventories;
 			if ( playerInventories == null || playerInventories.Count == 0 ) {
 				if ( updateFlaskMods ) {
 					Log("Failed to update flasks: PlayerInventories is null or empty.");
 				}
 				updateFlaskMods = false;
 				return;
-			}
-			if ( false ) {
-				Log($"Updating {playerInventories.Count} inventories.");
-				for ( int i = 0; i < playerInventories.Count; i++ ) {
-					var invent = playerInventories.ElementAt(i);
-					Log($"PlayerInventory[{i}] {invent?.Address} Id:{invent?.Id} {invent?.Inventory?.InventType}");
-				}
 			}
 			var flaskInventory = playerInventories.FirstOrDefault(x => x.Inventory != null && x.Inventory.InventType == InventoryTypeE.Flask);
 			if ( flaskInventory == null ) {
@@ -290,124 +287,43 @@ namespace Assistant {
 			}
 			if ( updateFlaskMods ) Log("Updating flasks...");
 			foreach ( var item in serverInventory.InventorySlotItems ) {
-				if ( !IsValid(item) ) continue;
-				var flaskEnt = item.Item;
-				if ( !IsValid(flaskEnt) ) continue;
-				Charges charges = flaskEnt.GetComponent<Charges>();
-				if ( charges == null ) continue;
-				Flask flask = flasks[item.PosX];
-				flask.CurrentCharges = charges.NumCharges;
-				flask.ChargesPerUse = charges.ChargesPerUse;
-				flask.MaxCharges = charges.ChargesMax;
-				if ( updateFlaskMods ) {
-					int amount = 0;
-					string pathName = flaskEnt.Path.Substring(flaskEnt.Path.LastIndexOf("/") + 1);
-					flask.PathName = pathName;
-					var quality = flaskEnt.GetComponent<Quality>();
-					if ( baseDuration.TryGetValue(pathName, out flask.Duration) ) {
-						if ( quality != null ) {
-							flask.Duration = (int)((float)flask.Duration * ((100 + quality.ItemQuality) / 100f));
-						}
-					} else flask.Duration = 3000;
-					// if this is a known Life flask
-					if ( baseHealAmount.TryGetValue(pathName, out flask.LifeHealAmount) ) {
-						if ( quality != null ) {
-							flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * ((100 + quality.ItemQuality) / 100f));
-						}
-					} else flask.LifeHealAmount = 0;
-
-					// handle Mana flasks
-					if ( baseManaAmount.TryGetValue(pathName, out amount) ) {
-						flask.ManaHealAmount = amount;
-						if ( quality != null ) {
-							flask.ManaHealAmount = (int)((float)amount * ((100 + quality.ItemQuality) / 100f));
-						}
-					} else flask.ManaHealAmount = 0;
-
-					Mods flaskMods = flaskEnt.GetComponent<Mods>();
-					foreach ( var mod in flaskMods.ItemMods ) {
-						Log($"Flask Mod: {mod.Name} {mod.Value1}");
-						switch ( mod.Name ) {
-							case "FlaskIncreasedDuration":
-								flask.Duration = (int)((float)flask.Duration * ((100 + mod.Value1) / 100f));
-								break;
-							case "FlaskEnchantmentInjectorOnFullCharges":
-								flask.EnchantUseOnFull = true;
-								break;
-							case "FlaskEnchantmentInjectorOnHittingRareOrUnique":
-								flask.EnchantUseOnHitRare = true;
-								break;
-							case "FlaskExtraCharges":
-								flask.MaxCharges += mod.Value1;
-								break;
-							case "FlaskInstantRecoveryOnLowLife":
-								flask.IsInstantOnLowLife = true;
-								flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .75f);
-								break;
-							case "FlaskFullInstantRecovery":
-								flask.IsInstant = true;
-								flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .34f);
-								break;
-							case "FlaskPartialInstantRecovery":
-								flask.IsInstant = true;
-								flask.LifeHealAmount = (int)((float)flask.LifeHealAmount * .25f);
-								break;
-							case "FlaskRemovesBleeding":
-							case "FlaskBleedCorruptingBloodImmunity":
-								LinkConditionToFlask("bleeding", flask);
-								LinkConditionToFlask("corrupted_blood", flask);
-								LinkConditionToFlask("corrupting_blood", flask);
-								break;
-							case "FlaskEffectNotRemovedOnFullMana":
-								flask.ManaHealAmount = (int)((float)flask.ManaHealAmount * .70f);
-								flask.Duration = (int)((float)flask.Duration * .70f);
-								break;
-							case "FlaskRemovesShock":
-							case "FlaskShockImmunity":
-								LinkConditionToFlask("shocked", flask); break;
-							case "FlaskCurseImmunity": LinkConditionToFlask("cursed", flask); break;
-							case "FlaskDispellsChill":
-							case "FlaskChillFreezeImmunity":
-							case "FlaskFreezeAndChillImmunityDuringEffect":
-								LinkConditionToFlask("chilled", flask);
-								LinkConditionToFlask("frozen", flask); break;
-							case "FlaskIgniteImmunityDuringEffect":
-							case "FlaskIgniteImmunity":
-							case "FlaskDispellsBurning":
-								LinkConditionToFlask("burning", flask);
-								LinkConditionToFlask("ignited", flask);
-								break;
-							case "FlaskDispellsPoison":
-							case "FlaskPoisonImmunity":
-								LinkConditionToFlask("poisoned", flask);
-								break;
-						}
-					}
-					Log($"Flask: {pathName} Charges: [{charges.NumCharges}/{charges.ChargesMax}] Quality: {quality.ItemQuality}% HP:{flask.LifeHealAmount} MP:{flask.ManaHealAmount}");
-				}
+				UpdateFlaskEnt(item.Item, item.PosX);
 			}
 			updateFlaskMods = false;
 		}
 
 		public static void OnTick() {
-			if ( api == null ) return;
-			if ( Paused ) return;
 			UpdateFlasks();
+			if ( Paused ) return;
 			CheckFlasks();
 		}
 
+		public static void Render() {
+			var gfx = GetGraphics();
+			for(int i = 0; i < 5; i++) {
+				Flask f = GetFlask(i);
+				gfx.DrawText($"[{f.CurrentCharges}/{f.ChargesPerUse}]", ScreenRelativeToWindow(.180f + (.027f * i), .898f), f.HasEnoughCharge ? SharpDX.Color.Yellow: SharpDX.Color.Orange);
+			}
+		}
+
 		private static void CheckFlasks() {
+			var api = GetGame();
+			if ( !IsValid(api) ) return;
 			if ( HasBuff("grace_period") ) return;
+			if ( api.Area == null ) return;
 			var area = api.Area.CurrentArea;
+			if ( area == null ) return;
 			if ( area.IsTown || area.IsHideout ) return;
 			var player = api.Player;
 			if ( !IsValid(player) ) return;
 			Life life = player.GetComponent<Life>();
 			if ( life == null ) return;
-			if ( Settings.AutoCureDebuffs.Value && CheckConditions(life) ) return;
-			if ( Settings.UseLifeFlasks.Value && CheckLifeFlasks(life) ) return;
-			if ( Settings.UseManaFlasks.Value && CheckManaFlasks(life) ) return;
-			if ( Settings.AutoUseFullPotions.Value && CheckFullFlasks() ) return;
+			var settings = GetSettings();
+			if ( settings == null ) return;
+			if ( settings.AutoCureDebuffs.Value && CheckConditions(life) ) return;
+			if ( settings.UseLifeFlasks.Value && CheckLifeFlasks(life) ) return;
+			if ( settings.UseManaFlasks.Value && CheckManaFlasks(life) ) return;
+			if ( settings.AutoUseFullPotions.Value && CheckFullFlasks() ) return;
 		}
 
 		private static bool CheckFullFlasks() {
@@ -456,13 +372,16 @@ namespace Assistant {
 		}
 
 		private static bool CheckLifeFlasks(Life life) {
+			if ( life == null ) return false;
 			var maxHp = life.MaxHP - life.TotalReservedHP;
 			var curHp = life.CurHP;
 			// at what point does the game consider you "low life" condition
 			var isLowLife = curHp <= life.MaxHP / 2;
 			// at what point should we use a flask
 			var lifeThreshold = maxHp / 2;
-			if ( Settings.DebugLife.Value ) DrawTextAtPlayer($"CheckLifeFlasks: {curHp} > {lifeThreshold}");
+			var settings = GetSettings();
+			if ( settings == null ) return false;
+			if ( settings.DebugLife.Value ) DrawTextAtPlayer($"CheckLifeFlasks: {curHp} > {lifeThreshold}");
 			if ( curHp <= lifeThreshold ) {
 				Flask instantFlask = null;
 				Flask slowFlask = null;
