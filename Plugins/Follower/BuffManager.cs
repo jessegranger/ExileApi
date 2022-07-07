@@ -64,7 +64,7 @@ namespace Assistant {
 					}
 					if ( needsBuff ) {
 						if ( !HasBuff(buff.BuffName) ) {
-							var key = InputManager.KeyToVirtualKey(buff.Node.Value);
+							var key = InputManager.ToVirtualKey(buff.Node.Value);
 							SkillManager.TryUseVaalSkill(buff.SkillName, key);
 							// } else { status += "Has Buff.";
 						}
@@ -83,7 +83,7 @@ namespace Assistant {
 				if ( HasBuff(buff.BuffName) ) {
 					continue;
 				}
-				var key = InputManager.KeyToVirtualKey(buff.Node.Value);
+				var key = InputManager.ToVirtualKey(buff.Node.Value);
 				SkillManager.TryUseSkill(buff.SkillName, key);
 			}
 			foreach ( var buff in buffsToClear ) {
@@ -93,7 +93,7 @@ namespace Assistant {
 					continue;
 				}
 				if ( !HasBuff(buff.BuffName) ) continue;
-				var key = InputManager.KeyToVirtualKey(buff.Node.Value);
+				var key = InputManager.ToVirtualKey(buff.Node.Value);
 				InputManager.PressKey(key, 40, 1000);
 			}
 		}
