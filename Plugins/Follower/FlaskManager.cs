@@ -2,6 +2,8 @@
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared.Enums;
+using SharpDX;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -17,92 +19,135 @@ namespace Assistant {
 			return pathName.StartsWith("Flask");
 		}
 
-
-		private static Dictionary<string, int> baseHealAmount = new Dictionary<string, int>()
-		{
-						{ "FlaskLife1", 70 },
-						{ "FlaskLife2", 150 },
-						{ "FlaskLife3", 250 },
-						{ "FlaskLife4", 360 },
-						{ "FlaskLife5", 640 },
-						{ "FlaskLife6", 830 },
-						{ "FlaskLife7", 1000 },
-						{ "FlaskLife8", 1200 },
-						{ "FlaskLife9", 1990 },
-						{ "FlaskLife10", 1460 },
-						{ "FlaskLife11", 2400 },
-						{ "FlaskLife12", 2080 },
-				};
-		private static Dictionary<string, int> baseManaAmount = new Dictionary<string, int>()
-		{
-						{ "FlaskMana1", 50 },
-						{ "FlaskMana2", 70 },
-						{ "FlaskMana3", 90 },
-						{ "FlaskMana4", 120 },
-						{ "FlaskMana5", 170 },
-						{ "FlaskMana6", 250 },
-						{ "FlaskMana7", 350 },
-						{ "FlaskMana8", 480 },
-						{ "FlaskMana9", 700 },
-						{ "FlaskMana10", 1100 },
-						{ "FlaskMana11", 1400 },
-						{ "FlaskMana12", 1800 },
-				};
-		private static Dictionary<string, int> baseDuration = new Dictionary<string, int>()
-		{
-						{ "FlaskLife1", 6000 },
-						{ "FlaskLife2", 7000 },
-						{ "FlaskLife3", 7000 },
-						{ "FlaskLife4", 7000 },
-						{ "FlaskLife5", 7000 },
-						{ "FlaskLife6", 7000 },
-						{ "FlaskLife7", 7000 },
-						{ "FlaskLife8", 7000 },
-						{ "FlaskLife9", 7000 },
-						{ "FlaskLife10", 7000 },
-						{ "FlaskLife11", 7000 },
-						{ "FlaskLife12", 7000 },
-						{ "FlaskMana1", 4000 },
-						{ "FlaskMana2", 4000 },
-						{ "FlaskMana3", 4000 },
-						{ "FlaskMana4", 4000 },
-						{ "FlaskMana5", 4000 },
-						{ "FlaskMana6", 4500 },
-						{ "FlaskMana7", 5000 },
-						{ "FlaskMana8", 5500 },
-						{ "FlaskMana9", 6000 },
-						{ "FlaskMana10", 6500 },
-						{ "FlaskMana11", 6000 },
-						{ "FlaskMana12", 4000 },
-						{ "FlaskHybrid1", 5000 }, // Large Hybrid
-            { "FlaskHybrid2", 5000 }, // Large Hybrid
-            { "FlaskHybrid3", 5000 }, // Large Hybrid
-            { "FlaskHybrid4", 5000 }, // Large Hybrid
-            { "FlaskHybrid5", 5000 }, // Large Hybrid
-            { "FlaskHybrid6", 5000 }, // Large Hybrid
-            { "FlaskUtility1", 4000 }, // Diamond Flask
-            { "FlaskUtility2", 4000 }, // Ruby Flask
-            { "FlaskUtility3", 4000 }, // Sapphire Flask
-            { "FlaskUtility4", 4000 }, // Topaz Flask
-            { "FlaskUtility5", 4000 }, // Granite Flask
-            { "FlaskUtility6", 4000 }, // Quicksilver Flask
-            { "FlaskUtility7", 3500 }, // Amethyst Flask
-            { "FlaskUtility8", 4000 }, // Quartz Flask
-            { "FlaskUtility9", 4000 }, // Jade Flask
-            { "FlaskUtility10", 4500 }, // Basalt Flask
-            { "FlaskUtility11", 4000 }, // ???
-            { "FlaskUtility12", 5000 }, // Stibnite Flask
-            { "FlaskUtility13", 4000 }, // Sulphur Flask
-            { "FlaskUtility14", 5000 }, // Silver Flask
-            { "FlaskUtility15", 5000 }, // Bismuth Flask
-
-        };
-
+		private static Dictionary<string, int> baseHealAmount = new Dictionary<string, int>() {
+			{ "FlaskLife1", 70 },
+			{ "FlaskLife2", 150 },
+			{ "FlaskLife3", 250 },
+			{ "FlaskLife4", 360 },
+			{ "FlaskLife5", 640 },
+			{ "FlaskLife6", 830 },
+			{ "FlaskLife7", 1000 },
+			{ "FlaskLife8", 1200 },
+			{ "FlaskLife9", 1990 },
+			{ "FlaskLife10", 1460 },
+			{ "FlaskLife11", 2400 },
+			{ "FlaskLife12", 2080 },
+		};
+		private static Dictionary<string, int> baseManaAmount = new Dictionary<string, int>() {
+			{ "FlaskMana1", 50 },
+			{ "FlaskMana2", 70 },
+			{ "FlaskMana3", 90 },
+			{ "FlaskMana4", 120 },
+			{ "FlaskMana5", 170 },
+			{ "FlaskMana6", 250 },
+			{ "FlaskMana7", 350 },
+			{ "FlaskMana8", 480 },
+			{ "FlaskMana9", 700 },
+			{ "FlaskMana10", 1100 },
+			{ "FlaskMana11", 1400 },
+			{ "FlaskMana12", 1800 },
+		};
+		private static Dictionary<string, int> baseDuration = new Dictionary<string, int>() {
+			{ "FlaskLife1", 6000 },
+			{ "FlaskLife2", 7000 },
+			{ "FlaskLife3", 7000 },
+			{ "FlaskLife4", 7000 },
+			{ "FlaskLife5", 7000 },
+			{ "FlaskLife6", 7000 },
+			{ "FlaskLife7", 7000 },
+			{ "FlaskLife8", 7000 },
+			{ "FlaskLife9", 7000 },
+			{ "FlaskLife10", 7000 },
+			{ "FlaskLife11", 7000 },
+			{ "FlaskLife12", 7000 },
+			{ "FlaskMana1", 4000 },
+			{ "FlaskMana2", 4000 },
+			{ "FlaskMana3", 4000 },
+			{ "FlaskMana4", 4000 },
+			{ "FlaskMana5", 4000 },
+			{ "FlaskMana6", 4500 },
+			{ "FlaskMana7", 5000 },
+			{ "FlaskMana8", 5500 },
+			{ "FlaskMana9", 6000 },
+			{ "FlaskMana10", 6500 },
+			{ "FlaskMana11", 6000 },
+			{ "FlaskMana12", 4000 },
+			{ "FlaskHybrid1", 5000 }, // Large Hybrid
+			{ "FlaskHybrid2", 5000 }, // Large Hybrid
+			{ "FlaskHybrid3", 5000 }, // Large Hybrid
+			{ "FlaskHybrid4", 5000 }, // Large Hybrid
+			{ "FlaskHybrid5", 5000 }, // Large Hybrid
+			{ "FlaskHybrid6", 5000 }, // Large Hybrid
+			{ "FlaskUtility1", 4000 }, // Diamond Flask
+			{ "FlaskUtility2", 4000 }, // Ruby Flask
+			{ "FlaskUtility3", 4000 }, // Sapphire Flask
+			{ "FlaskUtility4", 4000 }, // Topaz Flask
+			{ "FlaskUtility5", 4000 }, // Granite Flask
+			{ "FlaskUtility6", 4000 }, // Quicksilver Flask
+			{ "FlaskUtility7", 3500 }, // Amethyst Flask
+			{ "FlaskUtility8", 4000 }, // Quartz Flask
+			{ "FlaskUtility9", 4000 }, // Jade Flask
+			{ "FlaskUtility10", 4500 }, // Basalt Flask
+			{ "FlaskUtility11", 4000 }, // ???
+			{ "FlaskUtility12", 5000 }, // Stibnite Flask
+			{ "FlaskUtility13", 4000 }, // Sulphur Flask
+			{ "FlaskUtility14", 5000 }, // Silver Flask
+			{ "FlaskUtility15", 5000 }, // Bismuth Flask
+		};
+		private static Dictionary<string, string> baseBuffName = new Dictionary<string, string>() {
+			{ "FlaskLife1", "flask_effect_life"},
+			{ "FlaskLife2", "flask_effect_life"},
+			{ "FlaskLife3", "flask_effect_life"},
+			{ "FlaskLife4", "flask_effect_life"},
+			{ "FlaskLife5", "flask_effect_life"},
+			{ "FlaskLife6", "flask_effect_life"},
+			{ "FlaskLife7", "flask_effect_life"},
+			{ "FlaskLife8", "flask_effect_life"},
+			{ "FlaskLife9", "flask_effect_life"},
+			{ "FlaskLife10", "flask_effect_life"},
+			{ "FlaskLife11", "flask_effect_life"},
+			{ "FlaskLife12", "flask_effect_life"},
+			{ "FlaskMana1", "flask_effect_mana"},
+			{ "FlaskMana2", "flask_effect_mana"},
+			{ "FlaskMana3", "flask_effect_mana"},
+			{ "FlaskMana4", "flask_effect_mana"},
+			{ "FlaskMana5", "flask_effect_mana"},
+			{ "FlaskMana6", "flask_effect_mana"},
+			{ "FlaskMana7", "flask_effect_mana"},
+			{ "FlaskMana8", "flask_effect_mana"},
+			{ "FlaskMana9", "flask_effect_mana"},
+			{ "FlaskMana10", "flask_effect_mana"},
+			{ "FlaskMana11", "flask_effect_mana"},
+			{ "FlaskMana12", "flask_effect_mana"},
+			{ "FlaskHybrid1", "flask_effect_mana"}, // Large Hybrid
+			{ "FlaskHybrid2", "flask_effect_mana"}, // Large Hybrid
+			{ "FlaskHybrid3", "flask_effect_mana"}, // Large Hybrid
+			{ "FlaskHybrid4", "flask_effect_mana"}, // Large Hybrid
+			{ "FlaskHybrid5", "flask_effect_mana"}, // Large Hybrid
+			{ "FlaskHybrid6", "flask_effect_mana"}, // Large Hybrid
+			{ "FlaskUtility1", "flask_utility_critical_strike_chance"}, // Diamond Flask
+			{ "FlaskUtility2", "flask_utility_resist_fire"}, // Ruby Flask
+			{ "FlaskUtility3", "flask_utility_resist_cold"}, // Sapphire Flask
+			{ "FlaskUtility4", "flask_utility_resist_lightning"}, // Topaz Flask
+			{ "FlaskUtility5", "flask_utility_ironskin"}, // Granite Flask
+			{ "FlaskUtility6", "flask_utility_sprint" }, // Quicksilver Flask
+			{ "FlaskUtility7", "flask_utility_resist_chaos" }, // Amethyst Flask
+			{ "FlaskUtility8", "flask_utility_phase" }, // Quartz Flask
+			{ "FlaskUtility9", "flask_utility_evasion" }, // Jade Flask
+			{ "FlaskUtility10", "flask_utility_stone" }, // Basalt Flask
+			{ "FlaskUtility11", "flask_utility_aquamarine" }, // Aquamarine Flask
+			{ "FlaskUtility12", "flask_utility_smoke"}, // Stibnite Flask
+			{ "FlaskUtility13", "flask_utility_consecrate" }, // Sulphur Flask
+			{ "FlaskUtility14", "flask_utility_haste"}, // Silver Flask
+			{ "FlaskUtility15", "flask_utility_prismatic" }, // Bismuth Flask
+			{ "FlaskUtility16", "flask_utility_rarity" }, // Gold Flask
+			{ "FlaskUtility17", "flask_utility_stun_protection" }, // Corundum Flask
+		};
 		public class Flask {
 			public static Stopwatch GlobalTimer = Stopwatch.StartNew();
 			public Stopwatch UseTimer = new Stopwatch();
 			public VirtualKeyCode Key;
-			public string PathName;
+			public string PathName; // the last part of the full Path
 			public int CurrentCharges;
 			public int MaxCharges;
 			public int ChargesPerUse;
@@ -122,11 +167,14 @@ namespace Assistant {
 				if ( IsUsable(cooldown) ) {
 					GlobalTimer.Restart();
 					UseTimer.Restart();
-					InputManager.PressKey(Key, 30);
+					Log($"UseFlask: {Key}");
+					PressKey(Key, 30, 30);
 					return true;
 				}
 				return false;
 			}
+
+			public bool IsActive() => baseBuffName.TryGetValue(PathName, out string buff) && HasBuff(buff);
 
 			public override string ToString() => $"{PathName} [{CurrentCharges}/{MaxCharges}] hp:{LifeHealAmount} mp:{ManaHealAmount} {Duration} ms";
 
@@ -144,16 +192,15 @@ namespace Assistant {
 			return flasks[i];
 		}
 
-		private static bool Paused = true;
-
 		public static void Initialise() {
-			// F3 starts it and refreshes flask mods at the same time
-			InputManager.OnRelease(VirtualKeyCode.PAUSE, () => updateFlaskMods = !(Paused = !Paused));
-			InputManager.OnRelease(VirtualKeyCode.HOME, () => updateFlaskMods = true);
-			PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.305f, .983f), 0);
+			// when the system as a whole comes un-paused refresh the flasks
+			OnRelease(VirtualKeyCode.PAUSE, () => updateFlaskMods = true);
+			// bind HOME to just refresh flasks again (maybe the user moves them around)
+			OnRelease(VirtualKeyCode.HOME, () => updateFlaskMods = true);
+			PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.305f, .983f), 0, Color.Orange);
 		}
 
-		private static string GetStatusText() => $"[{(Paused ? "=" : ">")}]";
+		private static string GetStatusText() => $"[{(IsPaused() ? "=" : ">")}]";
 
 		private static Dictionary<string, Flask> conditionMap = new Dictionary<string, Flask>();
 		private static bool TryGetFlaskForCondition(string condition, out Flask flask) => conditionMap.TryGetValue(condition, out flask);
@@ -294,15 +341,15 @@ namespace Assistant {
 
 		public static void OnTick() {
 			UpdateFlasks();
-			if ( Paused ) return;
+			if ( IsPaused() ) return;
 			CheckFlasks();
 		}
 
 		public static void Render() {
 			var gfx = GetGraphics();
-			for(int i = 0; i < 5; i++) {
+			for ( int i = 0; i < 5; i++ ) {
 				Flask f = GetFlask(i);
-				gfx.DrawText($"[{f.CurrentCharges}/{f.ChargesPerUse}]", ScreenRelativeToWindow(.180f + (.027f * i), .898f), f.HasEnoughCharge ? SharpDX.Color.Yellow: SharpDX.Color.Orange);
+				gfx.DrawText($"[{f.CurrentCharges}/{f.ChargesPerUse}]", ScreenRelativeToWindow(.180f + (.027f * i), .898f), f.HasEnoughCharge ? SharpDX.Color.Yellow : SharpDX.Color.Orange);
 			}
 		}
 
@@ -321,29 +368,18 @@ namespace Assistant {
 			var settings = GetSettings();
 			if ( settings == null ) return;
 			if ( settings.AutoCureDebuffs.Value && CheckConditions(life) ) return;
-			if ( settings.UseLifeFlasks.Value && CheckLifeFlasks(life) ) return;
-			if ( settings.UseManaFlasks.Value && CheckManaFlasks(life) ) return;
-			if ( settings.AutoUseFullPotions.Value && CheckFullFlasks() ) return;
+			CheckUseFlasks(life);
 		}
+		private static readonly Random r = new Random();
 
-		private static bool CheckFullFlasks() {
-			var r = new System.Random();
-			foreach ( var flask in flasks ) {
-				if ( flask.IsFull && flask.LifeHealAmount == 0 && flask.ManaHealAmount == 0
-						&& (!flask.EnchantUseOnFull)
-						&& (!flask.EnchantUseOnHitRare)
-						&& flask.UseFlask(3000 + r.Next(1, 100)) ) {
-					return true;
-				}
-			}
-			return false;
-		}
 		private static bool CheckConditions(Life life) {
 			foreach ( var condition in conditionMap.Keys ) {
 				if ( HasBuff(condition) ) {
 					var flask = conditionMap[condition];
 					if ( flask.IsUsable(300) ) {
 						return flask.UseFlask(300);
+					} else {
+						Log($"Cannot use flask for {condition} (not ready)");
 					}
 				}
 			}
@@ -356,46 +392,51 @@ namespace Assistant {
 			}
 			return false;
 		}
-		private static bool CheckManaFlasks(Life life) {
+		private static bool NeedLifeFlask(Life life) {
+			var maxHp = life.MaxHP - life.TotalReservedHP;
+			return life.CurHP <= maxHp / 2;
+		}
+		private static bool NeedManaFlask(Life life) {
 			var maxMana = life.MaxMana - life.TotalReservedMana;
-			var curMana = life.CurMana;
 			var manaThreshold = maxMana * .4f;
-			if ( curMana < manaThreshold && !HasAnyBuff("flask_effect_mana") ) {
-
-				foreach ( var flask in flasks ) {
-					if ( flask.ManaHealAmount > 0 && flask.IsUsable(200) ) {
-						return flask.UseFlask(200);
-					}
-				}
-			}
-			return false;
+			var curMana = life.CurMana;
+			return curMana < manaThreshold && !HasAnyBuff("flask_effect_mana");
 		}
 
-		private static bool CheckLifeFlasks(Life life) {
-			if ( life == null ) return false;
-			var maxHp = life.MaxHP - life.TotalReservedHP;
-			var curHp = life.CurHP;
-			// at what point does the game consider you "low life" condition
-			var isLowLife = curHp <= life.MaxHP / 2;
-			// at what point should we use a flask
-			var lifeThreshold = maxHp / 2;
+		private static bool CheckUseFlasks(Life life) {
 			var settings = GetSettings();
-			if ( settings == null ) return false;
-			if ( settings.DebugLife.Value ) DrawTextAtPlayer($"CheckLifeFlasks: {curHp} > {lifeThreshold}");
-			if ( curHp <= lifeThreshold ) {
-				Flask instantFlask = null;
-				Flask slowFlask = null;
-				foreach ( var flask in flasks ) {
-					if ( !(flask.LifeHealAmount > 0 && flask.IsUsable(200)) ) continue;
+			bool needLifeFlask = NeedLifeFlask(life);
+			var isLowLife = life.CurHP <= life.MaxHP / 2;
+			Flask slowFlask = null;
+
+			bool needManaFlask = NeedManaFlask(life);
+			bool hasHitNearbyRare = settings.MaintainFlasksOnRare && NearbyEnemies(300).Any(e => IsAlive(e) && e.Rarity >= MonsterRarity.Rare && !IsFullLife(e));
+			foreach ( var flask in flasks ) {
+				if ( settings.UseLifeFlasks && needLifeFlask && flask.LifeHealAmount > 0 && flask.IsUsable(200) ) {
 					if ( flask.IsInstant || (flask.IsInstantOnLowLife && isLowLife) ) {
-						instantFlask = instantFlask ?? flask;
+						return flask.UseFlask(200);
 					} else {
 						slowFlask = slowFlask ?? flask;
 					}
+				} else if( settings.UseManaFlasks && needManaFlask && flask.ManaHealAmount > 0 && flask.IsUsable(200) ) {
+					return flask.UseFlask(200);
+				} else if( settings.AutoUseFullPotions 
+					&& flask.IsFull
+					&& flask.LifeHealAmount == 0 && flask.ManaHealAmount == 0
+					&& !flask.IsActive()
+					&& flask.UseFlask(2000 + r.Next(1,100))) {
+					return true;
+				} else if( settings.MaintainFlasksOnRare
+					&& hasHitNearbyRare
+					&& (!flask.EnchantUseOnHitRare)
+					&& flask.HasEnoughCharge
+					&& (!flask.IsActive())
+					&& flask.UseFlask(2000 + r.Next(1,100)) ) {
+					return true;
 				}
-				if ( instantFlask != null ) { return instantFlask.UseFlask(200); } else if ( slowFlask != null ) {
-					return HasBuff("flask_effect_life") || slowFlask.UseFlask(200);
-				}
+			}
+			if ( slowFlask != null ) {
+				return HasBuff("flask_effect_life") || slowFlask.UseFlask(200);
 			}
 			return false;
 		}
