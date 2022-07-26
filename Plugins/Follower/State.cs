@@ -12,7 +12,7 @@ using WindowsInput.Native;
 using static Assistant.Globals;
 
 namespace Assistant {
-	public class State {
+	public abstract class State {
 
 		// 'Next' defines the default State we will go to when this State is complete.
 		// This value is just a suggestion, the real value is what gets returned by OnTick
@@ -28,8 +28,9 @@ namespace Assistant {
 		// OnTick gets called every frame (by a StateMachine), and should return the next State to continue with (usually itself).
 		public virtual State OnTick() => this;
 
-		// OnAbort gets called (by a StateMachine), to ask a State to clean up any incomplete work immediately (before returning).
-		public virtual void OnAbort() { }
+		// OnCancel gets called (by a StateMachine), to ask a State to clean up any incomplete work immediately (before returning).
+		public virtual void OnCancel() { }
+
 		public virtual State Then(State next) {
 			Next = next;
 			return lastNext();
@@ -42,7 +43,7 @@ namespace Assistant {
 			return cursor.lastNext();
 		}
 		public virtual State Then(Action action) {
-			Next = new ActionState(action);
+			Next = State.From(action);
 			return lastNext();
 		}
 		private State lastNext() {
@@ -60,8 +61,9 @@ namespace Assistant {
 		// You can create a new State using any Func<State, State>
 		public static State From(string label, Func<State, State> func) => new Runner(label, func);
 		public static State From(Func<State, State> func) => new Runner(func);
-		public static implicit operator State(Func<State, State> func) => new Runner(func);
-		public static implicit operator Func<State, State>(State state) => (s) => { try { return state.OnTick(); } catch ( Exception ) { return null; } };
+		public static State From(Action func) => new ActionState(func);
+		// public static implicit operator State(Func<State, State> func) => new Runner(func);
+		// public static implicit operator Func<State, State>(State state) => (s) => { try { return state.OnTick(); } catch ( Exception ) { return null; } };
 
 		// A Runner is a special State that uses a Func<State, State> to convert the Func into a class object with a State interface
 		private class Runner : State {
@@ -126,22 +128,26 @@ namespace Assistant {
 				try {
 					LinkedListNode<State> curNode = States.First;
 					while ( curNode != null ) {
-						State curState = curNode.Value;
-						State gotoState = curState.OnTick();
-						if ( gotoState == null ) {
-							Log($"State Finished: {curState.Name}.");
-							curNode = RemoveAndContinue(States, curNode);
-							continue;
-						}
-						if ( gotoState != curState ) {
-							gotoState = gotoState.OnEnter();
-							Log($"State Changed: {curState.Name} to {gotoState.Name}");
-							if ( gotoState.GetType() == typeof(Clear) ) {
-								Abort(except: curState); // call all OnAbort in State, except curState.OnAbort, because it just ended cleanly (as far as it knows)
-								return gotoState.Next ?? Next;
+						try {
+							State curState = curNode.Value;
+							State gotoState = curState.OnTick();
+							if ( gotoState == null ) {
+								Log($"State Finished: {curState.Name}.");
+								curNode = RemoveAndContinue(States, curNode);
+								continue;
 							}
-							curState.Next = null; // just in case
-							curNode.Value = gotoState;
+							if ( gotoState != curState ) {
+								gotoState = gotoState.OnEnter();
+								Log($"State Changed: {curState.Name} to {gotoState.Name}");
+								if ( gotoState.GetType() == typeof(Clear) ) {
+									Cancel(except: curState); // call all OnAbort in State, except curState.OnAbort, because it just ended cleanly (as far as it knows)
+									return gotoState.Next ?? Next;
+								}
+								curState.Next = null; // just in case
+								curNode.Value = gotoState;
+							}
+						} catch( Exception e ) {
+							DebugWindow.LogError(e.StackTrace);
 						}
 						curNode = curNode.Next; // loop over the whole list
 					}
@@ -151,8 +157,8 @@ namespace Assistant {
 				}
 				return States.Count == 0 ? Next : this;
 			}
-			public void Abort(State except = null) {
-				foreach ( State s in States ) if ( s != except ) s.OnAbort();
+			public void Cancel(State except = null) {
+				foreach ( State s in States ) if ( s != except ) s.OnCancel();
 				States.Clear();
 			}
 			public void Add(State state) {
@@ -169,31 +175,38 @@ namespace Assistant {
 			}
 
 			public bool HasState(Type stateType) => States.Any(s => s.GetType() == stateType);
+			public bool HasState(string stateName) => States.Any(s => s.Name.Equals(stateName));
 		}
 
-	}
-	public class ActionState : State // An ActionState calls an Action one time and then proceeds.
-	{
-		public readonly Action Act;
-		public ActionState(Action action, State next = null) : base(next) => Act = action;
-
-		public override State OnTick() {
-			Act?.Invoke();
-			return Next;
+		public static State WaitFor(uint duration, Func<bool> predicate, State next, State fail) {
+			Stopwatch timer = Stopwatch.StartNew();
+			return State.From((state) =>
+				timer.ElapsedMilliseconds > duration ? fail :
+					predicate() ? next :
+					state
+			);
 		}
-
+		private class ActionState : State {
+			public readonly Action Act;
+			public ActionState(Action action, State next = null) : base(next) => Act = action;
+			public override State OnTick() {
+				Act?.Invoke();
+				return Next;
+			}
+		}
 	}
 
 	public class Delay : State // Delay is a State that waits for a fixed number of milliseconds
 	{
-		Stopwatch sw = new Stopwatch();
+		private static Stopwatch sw = Stopwatch.StartNew(); // use only one timer for all the (many) Delay objects
+		private long started;
 		readonly uint ms;
 		public Delay(uint ms, State next = null) : base(next) => this.ms = ms;
 		public override State OnEnter() {
-			sw.Restart();
+			started = sw.ElapsedMilliseconds;
 			return this;
 		}
-		public override State OnTick() => sw.ElapsedMilliseconds >= ms ? Next : (this);
+		public override State OnTick() => (sw.ElapsedMilliseconds - started) >= ms ? Next : (this);
 		public override string Name => $"Delay({ms})";
 	}
 
@@ -212,6 +225,7 @@ namespace Assistant {
 	class KeyDown : KeyState {
 		public KeyDown(VirtualKeyCode key, State next = null) : base(key, next) { }
 		public override State OnTick() {
+			if ( !AllowInputInChatBox && ChatIsOpen() ) return Next;
 			if ( debug ) Log($"KeyDown {Key}");
 			input.Keyboard.KeyDown(Key);
 			return Next;
@@ -222,6 +236,7 @@ namespace Assistant {
 	class KeyUp : KeyState {
 		public KeyUp(VirtualKeyCode key, State next = null) : base(key, next) { }
 		public override State OnTick() {
+			if ( !AllowInputInChatBox && ChatIsOpen() ) return Next;
 			if ( debug ) Log($"KeyUp {Key}");
 			input.Keyboard.KeyUp(Key);
 			return Next;
@@ -230,10 +245,27 @@ namespace Assistant {
 	}
 
 	class PressKey : KeyState {
+		private static Stopwatch pressTimer = Stopwatch.StartNew();
+		private static Dictionary<VirtualKeyCode, long> lastPressTime = new Dictionary<VirtualKeyCode, long>();
+		private readonly long throttle = long.MaxValue;
 		public PressKey(VirtualKeyCode key, uint duration, State next = null) : base(key,
 				new KeyDown(key, new Delay(duration, new KeyUp(key, next)))) { }
+		public PressKey(VirtualKeyCode key, uint duration, long throttle, State next = null) : base(key,
+				new KeyDown(key, new Delay(duration, new KeyUp(key, next)))) {
+			this.throttle = throttle;
+		}
 
-		public override State OnEnter() => Next;
+		public override State OnEnter() {
+			lastPressTime.TryGetValue(Key, out long lastPress);
+			long now = pressTimer.ElapsedMilliseconds;
+			long elapsed = now - lastPress;
+			if( throttle != long.MaxValue && elapsed < throttle ) {
+				Log($"Key {Key} throttled. {elapsed} < {throttle}");
+				return null;
+			}
+			lastPressTime[Key] = pressTimer.ElapsedMilliseconds;
+			return Next;
+		}
 	}
 
 	class MoveMouse : InputState {
@@ -255,7 +287,11 @@ namespace Assistant {
 			if ( window == null ) return Next;
 			var w = window.GetWindowRectangleTimeCache;
 			var bounds = Screen.PrimaryScreen.Bounds;
-			if ( debug ) Log($"MouseMove {X} {Y}");
+			if ( X > bounds.Width || X < 0 || Y > bounds.Height || Y < 0 ) {
+				Log($"MoveMouse: rejected {X} {Y}");
+				return null;
+			}
+			if ( debug ) Log($"MoveMouse: {X} {Y}");
 			input.Mouse.MoveMouseTo(
 					(w.Left + X) * 65535 / bounds.Width,
 					(w.Top + Y) * 65535 / bounds.Height);
@@ -290,16 +326,19 @@ namespace Assistant {
 	}
 
 	class LeftClick : InputState {
-		public LeftClick(uint duration, State next = null) : base(
-				new LeftMouseDown(new Delay(duration, new LeftMouseUp(next)))) { }
+		public LeftClick(uint duration, uint count, State next = null) : base(
+			count == 0 ? next
+			: new LeftMouseDown(new Delay(duration, new LeftMouseUp(
+				count > 1 ? new Delay(100, new LeftClick(duration, count - 1, next))
+				: next)))) { }
 		public override State OnEnter() => Next;
 	}
 
 	class LeftClickAt : InputState {
-		public LeftClickAt(Element elem, uint duration, State next = null) : this(elem?.GetClientRect().Center ?? Vector2.Zero, duration, next) { }
-		public LeftClickAt(Vector2 pos, uint duration, State next = null) : this(pos.X, pos.Y, duration, next) { }
-		public LeftClickAt(float x, float y, uint duration, State next = null) : base(
-				new MoveMouse(x, y, new Delay(duration, new LeftMouseDown(new Delay(duration, new LeftMouseUp(next)))))) { }
+		public LeftClickAt(Element elem, uint duration, uint count, State next = null) : this(elem?.GetClientRect().Center ?? Vector2.Zero, duration, count, next) { }
+		public LeftClickAt(Vector2 pos, uint duration, uint count, State next = null) : this(pos.X, pos.Y, duration, count, next) { }
+		public LeftClickAt(float x, float y, uint duration, uint count, State next = null) : base(
+				new MoveMouse(x, y, new Delay(duration, new LeftClick(duration, count, next)))) { }
 	}
 
 	class RightMouseDown : InputState {
