@@ -20,7 +20,7 @@ namespace Assistant {
 			api = game;
 			Graphics = gfx;
 			Settings = settings;
-			InputManager.OnRelease(VirtualKeyCode.PAUSE, () => Paused = !Paused);
+			OnRelease(VirtualKeyCode.PAUSE, () => Paused = !Paused);
 			// PersistedText.Add(GetStatusText, (c) => ScreenRelativeToWindow(.72f, .85f), 0);
 		}
 
@@ -64,7 +64,7 @@ namespace Assistant {
 					}
 					if ( needsBuff ) {
 						if ( !HasBuff(buff.BuffName) ) {
-							var key = InputManager.ToVirtualKey(buff.Node.Value);
+							var key = ToVirtualKey(buff.Node.Value);
 							SkillManager.TryUseVaalSkill(buff.SkillName, key);
 							// } else { status += "Has Buff.";
 						}
@@ -77,24 +77,24 @@ namespace Assistant {
 			foreach ( var buff in buffsToMaintain ) {
 				if ( !(buff.Node?.Enabled ?? false) ) continue;
 				try { if ( !buff.Condition() ) continue; } catch ( Exception err ) {
-					Log($"Exception: {err.ToString()}");
+					Log($"Exception: {err}");
 					continue;
 				}
 				if ( HasBuff(buff.BuffName) ) {
 					continue;
 				}
-				var key = InputManager.ToVirtualKey(buff.Node.Value);
+				var key = ToVirtualKey(buff.Node.Value);
 				SkillManager.TryUseSkill(buff.SkillName, key);
 			}
 			foreach ( var buff in buffsToClear ) {
 				if ( !(buff.Node?.Enabled ?? false) ) continue;
 				try { if ( !buff.Condition() ) continue; } catch ( Exception err ) {
-					Log($"Exception: {err.ToString()}");
+					Log($"Exception: {err}");
 					continue;
 				}
 				if ( !HasBuff(buff.BuffName) ) continue;
-				var key = InputManager.ToVirtualKey(buff.Node.Value);
-				InputManager.PressKey(key, 40, 1000);
+				var key = ToVirtualKey(buff.Node.Value);
+				PressKey(key, 40, 1000);
 			}
 		}
 	}
