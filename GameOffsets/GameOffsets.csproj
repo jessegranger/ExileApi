@@ -5,6 +5,7 @@
     <Product>GameOffsets</Product>
     <Copyright>Copyright ©  2019</Copyright>
     <OutputPath>..\..\PoeHelper\</OutputPath>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
