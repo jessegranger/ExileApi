@@ -226,7 +226,7 @@ namespace ExileCore.Shared
                 //Pre init some general objects because with multi threading load they can null sometimes for some plugin
                 var ingameStateIngameUi = gameController.IngameState.IngameUi;
                 var ingameStateData = gameController.IngameState.Data;
-                var ingameStateServerData = gameController.IngameState.ServerData;
+                var ingameStateServerData = gameController.IngameState.Data.ServerData;
                 Parallel.ForEach(Plugins, wrapper => wrapper.Initialise(gameController));
             }
             else
