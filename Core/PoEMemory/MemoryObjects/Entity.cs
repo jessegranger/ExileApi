@@ -367,6 +367,7 @@ namespace ExileCore.PoEMemory.MemoryObjects
         {
             return GridPos.Distance(entity.GridPos);
         }
+        public float DistanceSquared(Entity entity) => GridPos.DistanceSquared(entity.GridPos);
 
         protected override void OnAddressChange()
         {
