@@ -7,64 +7,64 @@ namespace GameOffsets
     {
         [FieldOffset(0x250)] public readonly long GetQuests;
         [FieldOffset(0x288)] public readonly long GameUI;
-        [FieldOffset(0x3D0)] public readonly long Mouse;
-        [FieldOffset(0x3D8)] public readonly long SkillBar;
-        [FieldOffset(0x3E0)] public readonly long HiddenSkillBar;
-        [FieldOffset(0x478)] public readonly long ChatBoxRoot;
-        [FieldOffset(0x4A8)] public readonly long QuestTracker;
-        [FieldOffset(0x530)] public readonly long OpenLeftPanel;
-        [FieldOffset(0x538)] public readonly long OpenRightPanel;
-        [FieldOffset(0x560)] public readonly long InventoryPanel;
-        [FieldOffset(0x568)] public readonly long StashElement;
-        [FieldOffset(0x570)] public readonly long GuildStashElement;
-        [FieldOffset(0x610)] public readonly long AtlasPanel;
-        [FieldOffset(0x618)] public readonly long AtlasSkillPanel;
-        [FieldOffset(0x648)] public readonly long WorldMap;
-        [FieldOffset(0x670)] public readonly long Map;
-        [FieldOffset(0x678)] public readonly long ItemsOnGroundLabelElement;
-        [FieldOffset(0x680)] public readonly long BanditDialog;
-        [FieldOffset(0x700)] public readonly long RootBuffPanel;
-        [FieldOffset(0x708)] public readonly long NpcDialog;
-        [FieldOffset(0x710)] public readonly long LeagueNpcDialog;
-        [FieldOffset(0x718)] public readonly long LeagueInteractButtonPanel;
-        [FieldOffset(0x720)] public readonly long QuestRewardWindow;
-        [FieldOffset(0x728)] public readonly long PurchaseWindow;
-        [FieldOffset(0x730)] public readonly long HaggleWindow; // LeaguePurchasePanel
-        [FieldOffset(0x738)] public readonly long SellWindow;
-        [FieldOffset(0x740)] public readonly long ExpeditionSellWindow; // LeagueSellPanel
-        [FieldOffset(0x748)] public readonly long TradeWindow;
-        [FieldOffset(0x758)] public readonly long LabyrinthDivineFontPanel;
+        [FieldOffset(0x3D8)] public readonly long Mouse;
+        [FieldOffset(0x3E0)] public readonly long SkillBar;
+        [FieldOffset(0x3E8)] public readonly long HiddenSkillBar;
+        [FieldOffset(0x480)] public readonly long ChatBoxRoot;
+        [FieldOffset(0x4B0)] public readonly long QuestTracker;
+        [FieldOffset(0x538)] public readonly long OpenLeftPanel;
+        [FieldOffset(0x540)] public readonly long OpenRightPanel;
+        [FieldOffset(0x568)] public readonly long InventoryPanel;
+        [FieldOffset(0x570)] public readonly long StashElement;
+        [FieldOffset(0x578)] public readonly long GuildStashElement;
+        [FieldOffset(0x618)] public readonly long AtlasPanel;
+        [FieldOffset(0x620)] public readonly long AtlasSkillPanel;
+        [FieldOffset(0x650)] public readonly long WorldMap;
+        [FieldOffset(0x678)] public readonly long Map;
+        [FieldOffset(0x680)] public readonly long ItemsOnGroundLabelElement;
+        [FieldOffset(0x688)] public readonly long BanditDialog;
+        [FieldOffset(0x708)] public readonly long RootBuffPanel;
+        [FieldOffset(0x718)] public readonly long NpcDialog;
+        [FieldOffset(0x720)] public readonly long LeagueNpcDialog;
+        [FieldOffset(0x720)] public readonly long LeagueInteractButtonPanel;
+        [FieldOffset(0x728)] public readonly long QuestRewardWindow;
+        [FieldOffset(0x730)] public readonly long PurchaseWindow;
+        [FieldOffset(0x738)] public readonly long HaggleWindow; // LeaguePurchasePanel
+        [FieldOffset(0x740)] public readonly long SellWindow;
+        [FieldOffset(0x748)] public readonly long ExpeditionSellWindow; // LeagueSellPanel
+        [FieldOffset(0x750)] public readonly long TradeWindow;
+        [FieldOffset(0x760)] public readonly long LabyrinthDivineFontPanel;
         [FieldOffset(0x770)] public readonly long MapDeviceWindow;
         [FieldOffset(0x7B8)] public readonly long CardTradePanel;
         [FieldOffset(0x7C0)] public readonly long IncursionWindow;
         [FieldOffset(0x7C8)] public readonly long IncursionCorruptionAltarPanel;
         [FieldOffset(0x7D0)] public readonly long IncursionAltarOfSacrificePanel;
         [FieldOffset(0x7D8)] public readonly long IncursionLapidaryLensPanel;
-        [FieldOffset(0x7E0)] public readonly long DelveWindow;
+        [FieldOffset(0x7E8)] public readonly long DelveWindow;
         [FieldOffset(0x7E8)] public readonly long DelveOldSubterraneanChartPanel;
-        [FieldOffset(0x7F0)] public readonly long ZanaMissionChoice; // KiracMissionPanel
-        [FieldOffset(0x800)] public readonly long BetrayalWindow;
-        [FieldOffset(0x810)] public readonly long CraftBench;
-        [FieldOffset(0x818)] public readonly long UnveilWindow;
-        [FieldOffset(0x838)] public readonly long BlightAnointItemPanel;
-        [FieldOffset(0x840)] public readonly long MetamorphWindow;
-        [FieldOffset(0x848)] public readonly long TanesMetamorphPanel;
-        [FieldOffset(0x850)] public readonly long HorticraftingHideoutPanel;
-        [FieldOffset(0x858)] public readonly long HeistContractWindow;
-        [FieldOffset(0x860)] public readonly long HeistRevealWindow;
-        [FieldOffset(0x868)] public readonly long HeistAllyEquipmentWindow;
-        [FieldOffset(0x870)] public readonly long HeistBlueprintWindow;
-        [FieldOffset(0x878)] public readonly long HeistLockerWindow;
-        [FieldOffset(0x880)] public readonly long RitualWindow;
-        [FieldOffset(0x888)] public readonly long RitualFavourWindow;
-        [FieldOffset(0x890)] public readonly long UltimatumProgressWindow;
-        [FieldOffset(0x898)] public readonly long ExpeditionSelectPanel;
-        [FieldOffset(0x8A0)] public readonly long LogbookReceptaclePanel;
-        [FieldOffset(0x8A8)] public readonly long ExpeditionLockerPanel;
+        [FieldOffset(0x7F8)] public readonly long ZanaMissionChoice; // KiracMissionPanel
+        [FieldOffset(0x808)] public readonly long BetrayalWindow;
+        [FieldOffset(0x818)] public readonly long CraftBench;
+        [FieldOffset(0x820)] public readonly long UnveilWindow;
+        [FieldOffset(0x840)] public readonly long BlightAnointItemPanel;
+        [FieldOffset(0x848)] public readonly long MetamorphWindow;
+        [FieldOffset(0x850)] public readonly long TanesMetamorphPanel;
+        [FieldOffset(0x858)] public readonly long HorticraftingHideoutPanel;
+        [FieldOffset(0x860)] public readonly long HeistContractWindow;
+        [FieldOffset(0x868)] public readonly long HeistRevealWindow;
+        [FieldOffset(0x870)] public readonly long HeistAllyEquipmentWindow;
+        [FieldOffset(0x878)] public readonly long HeistBlueprintWindow;
+        [FieldOffset(0x880)] public readonly long HeistLockerWindow;
+        [FieldOffset(0x888)] public readonly long RitualWindow;
+        [FieldOffset(0x890)] public readonly long RitualFavourWindow;
+        [FieldOffset(0x898)] public readonly long UltimatumProgressWindow;
+        [FieldOffset(0x8a0)] public readonly long ExpeditionSelectPanel;
+        [FieldOffset(0x8A8)] public readonly long LogbookReceptaclePanel;
+        [FieldOffset(0x8B0)] public readonly long ExpeditionLockerPanel;
         [FieldOffset(0x8B8)] public readonly long KalandraMirroredTabletPanel;
         [FieldOffset(0x8C0)] public readonly long KalandraReflectionPanel;
-        [FieldOffset(0x8E0)] public readonly long BuffsPanel;
-        [FieldOffset(0x8E8)] public readonly long DelveDarkness; // Debuffs Panel
+        [FieldOffset(0x8E8)] public readonly long BuffsPanel;
+        [FieldOffset(0x8F0)] public readonly long DelveDarkness; // Debuffs Panel
         [FieldOffset(0x928)] public readonly long AreaInstanceUi;
         [FieldOffset(0x988)] public readonly long InteractButtonWrapper;
         [FieldOffset(0x990)] public readonly long SkipAheadButton;
@@ -75,7 +75,7 @@ namespace GameOffsets
         [FieldOffset(0x9B8)] public readonly long RitualInteractPanel;
         [FieldOffset(0x9C0)] public readonly long ExpeditionInteractPanel;
         [FieldOffset(0x9F8)] public readonly long InvitesPanel;
-        [FieldOffset(0xA40)] public readonly long GemLvlUpPanel;
+        [FieldOffset(0xA48)] public readonly long GemLvlUpPanel;
         [FieldOffset(0xA58)] public readonly long SkillBarNotifyPanel1;
         [FieldOffset(0xB18)] public readonly long ItemOnGroundTooltip;
 
