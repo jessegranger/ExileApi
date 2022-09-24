@@ -74,15 +74,19 @@ namespace ExileCore.PoEMemory.MemoryObjects
             }
         }
 
+    private static bool debugOnce = true;
         private void ParseName()
         {
-            var addr = M.Read<long>(Address + 0x28, 0);
+            var nameStructBase = 0x28;
+            var displayNameOffset = 0x64;
+            var groupOffset = 0x60;
+            var addr = M.Read<long>(Address + nameStructBase, 0);
             _RawName = Cache.StringCache.Read($"{nameof(ItemMod)}{addr}", () => M.ReadStringU(addr));
 
-            _DisplayName = Cache.StringCache.Read($"{nameof(ItemMod)}{addr + 0x64}", () => M.ReadStringU(M.Read<long>(Address + 0x28, 0x64)));
+            _DisplayName = Cache.StringCache.Read($"{nameof(ItemMod)}{addr + displayNameOffset}", () => M.ReadStringU(M.Read<long>(Address + nameStructBase, displayNameOffset)));
 
             _Name = _RawName.Replace("_", ""); // Master Crafted mod can have underscore on the end, need to ignore
-            _Group = Cache.StringCache.Read($"{nameof(ItemMod)}{addr + 0x70}", () => M.ReadStringU(M.Read<long>(Address + 0x28, 0x70)));
+            _Group = Cache.StringCache.Read($"{nameof(ItemMod)}{addr + groupOffset}", () => M.ReadStringU(M.Read<long>(Address + nameStructBase, groupOffset)));
             var ixDigits = _Name.IndexOfAny("0123456789".ToCharArray());
 
             if (ixDigits < 0 || !int.TryParse(_Name.Substring(ixDigits), out _Level))
