@@ -138,7 +138,7 @@ namespace Loader
                 {
                     LogError(e);
                 }
-            });
+            }, true);
         }
 
         private void LogHudLoadedMessage()
