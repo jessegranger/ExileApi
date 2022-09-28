@@ -259,6 +259,7 @@ namespace ExileCore.RenderQ
         {
             try
             {
+                Time.DeltaTime = sw.Elapsed.TotalSeconds - startFrameTime;
                 startFrameTime = sw.Elapsed.TotalSeconds;
                 Clear(new Color(_clearColor.X, _clearColor.Y, _clearColor.Z, _clearColor.W));
                 debugTime = sw.Elapsed.TotalMilliseconds;
